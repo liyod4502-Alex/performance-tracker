@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Performance" />
+  <title>Performance Optimizer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0D1117; color: #E6EDF3; font-family: -apple-system, BlinkMacSystemFont, Inter, sans-serif; }
+    input[type=range] { width: 100%; cursor: pointer; }
+    button { font-family: inherit; cursor: pointer; }
+    input { font-family: inherit; }
+    .chart-wrap { overflow-x: auto; }
+    .chart-bar { transition: width 0.4s; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+
+const { useState, useEffect } = React;
+
+// ── Storage ──
+const KEY = "perf_v1";
+function loadAll() { try { return JSON.parse(localStorage.getItem(KEY)||"{}"); } catch(e){ return {}; } }
+function saveKey(k,v) { const s=loadAll(); s[k]=v; try{ localStorage.setItem(KEY,JSON.stringify(s)); }catch(e){} }
+function getKey(k,fb) { const v=loadAll()[k]; return v!==undefined?v:fb; }
+
+// ── Data ──
+const VITAMINS = [
+  {name:"Garden of Life Men's Once Daily",note:"Whole food multivitamin - baseline"},
+  {name:"Zinc (extra, target 15-25mg total)",note:"Multi only gives 3.9mg - top up"},
+  {name:"Magnesium glycinate 300-400mg",note:"Before bed"},
+  {name:"Vitamin D3 2,000-4,000 IU",note:"Take if sun exposure is low"},
+];
+const AVOID = [
+  "Avoid alcohol (blocks testosterone 24-48 hrs)",
+  "No P/M - protect dopamine and refractory cycle",
+  "Avoid late-night heavy meals (disrupts sleep/T)",
+  "No less than 7-9 hrs sleep - non-negotiable",
+];
+const PRACTICES = [
+  "Cold shower 2-3 min",
+  "Kegel exercises (3 sets of 20)",
+  "10 min breathwork / meditation",
+  "2-3L water throughout the day",
+];
+const WEEKS = [
+  { label:"Week 1 - Foundation", T:"#2D6A4F", supp:"Zinc 15-25mg",
+    days:[
+      {day:"Mon",ex:"Squats 4x10 + Hip Thrusts 3x12",focus:"Testosterone trigger",foods:["Watermelon (incl. white rind)","Spinach / Arugula"]},
+      {day:"Tue",ex:"Cardio 20 min (brisk walk/jog)",focus:"Blood flow / NO production",foods:["Beets / Beet juice","Walnuts"]},
+      {day:"Wed",ex:"Push-ups 4x15 + Deadlifts (light)",focus:"Full body hormone boost",foods:["Dark chocolate 85%+","Watermelon (incl. white rind)"]},
+      {day:"Thu",ex:"Rest / Yoga / Stretching",focus:"Cortisol reduction",foods:["Spinach / Arugula","Walnuts"]},
+      {day:"Fri",ex:"Squats 4x12 + Lunges 3x10",focus:"Pelvic floor activation",foods:["Beets / Beet juice","Dark chocolate 85%+"]},
+      {day:"Sat",ex:"Kegel exercises 3x20 reps",focus:"Erection control",foods:["Watermelon (incl. white rind)","Walnuts"]},
+      {day:"Sun",ex:"Active rest (light walk)",focus:"Recovery",foods:["Spinach / Arugula","Beets / Beet juice"]},
+    ]},
+  { label:"Week 2 - Intensity Up", T:"#1B4332", supp:"Maca root 1.5-3g + Citrulline malate (optional)",
+    days:[
+      {day:"Mon",ex:"Bulgarian split squats 4x8 each leg",focus:"Glute/hip chain",foods:["Watermelon (incl. white rind)","Pomegranate juice (30ml)"]},
+      {day:"Tue",ex:"Jump rope 15 min + core work",focus:"Cardiovascular",foods:["Avocado","Oats"]},
+      {day:"Wed",ex:"Push-ups + rows (bands/dumbbells)",focus:"Upper body",foods:["Garlic","Maca root powder"]},
+      {day:"Thu",ex:"Pelvic floor work + breathwork",focus:"Parasympathetic tone",foods:["Brazil nuts (2/day)","Pomegranate juice (30ml)"]},
+      {day:"Fri",ex:"Heavy squats + hip thrusts",focus:"Peak testosterone stimulus",foods:["Watermelon (incl. white rind)","Maca root powder"]},
+      {day:"Sat",ex:"Yoga / full body stretching",focus:"Flexibility + cortisol",foods:["Avocado","Garlic"]},
+      {day:"Sun",ex:"Rest",focus:"Full recovery",foods:["Oats","Brazil nuts (2/day)"]},
+    ]},
+  { label:"Week 3 - Hormonal Peak", T:"#40916C", supp:"Zinc 20-25mg + Citrulline malate (optional)",
+    days:[
+      {day:"Mon",ex:"Squats 5x10 + Hip Thrusts 4x12",focus:"Testosterone trigger (+20%)",foods:["Watermelon (incl. white rind)","Ginger (fresh/tea)"]},
+      {day:"Tue",ex:"Cardio 25 min + sprints 3x30s",focus:"Enhanced blood flow",foods:["Hemp seeds","Cayenne pepper"]},
+      {day:"Wed",ex:"Push-ups 5x15 + Deadlifts",focus:"Full body hormone surge",foods:["Fenugreek (in smoothie)","Saffron (pinch in food)"]},
+      {day:"Thu",ex:"Rest / Yoga / Stretching",focus:"Cortisol management",foods:["Ginger (fresh/tea)","Hemp seeds"]},
+      {day:"Fri",ex:"Squats 5x12 + Lunges 4x10",focus:"Pelvic activation",foods:["Watermelon (incl. white rind)","Saffron (pinch in food)"]},
+      {day:"Sat",ex:"Kegel exercises 4x20 reps",focus:"Erection strength",foods:["Cayenne pepper","Fenugreek (in smoothie)"]},
+      {day:"Sun",ex:"Active rest + cold shower",focus:"Dopamine + T reset",foods:["Hemp seeds","Ginger (fresh/tea)"]},
+    ]},
+  { label:"Week 4 - Recovery and Reset", T:"#52B788", supp:"Magnesium glycinate 400mg + Zinc 15mg + Vitamin D3 2,000 IU",
+    days:[
+      {day:"Mon",ex:"Light walk 20 min + stretching",focus:"Active recovery",foods:["Watermelon (incl. white rind)","Lentils + chickpeas"]},
+      {day:"Tue",ex:"Yoga 30 min",focus:"Cortisol reset",foods:["Sunflower seeds","Green tea"]},
+      {day:"Wed",ex:"Breathing exercises + Kegels",focus:"Pelvic + nervous system",foods:["Blueberries + blackberries","Tofu or tempeh"]},
+      {day:"Thu",ex:"Light walk",focus:"Blood flow maintenance",foods:["Sweet potato","Watermelon (incl. white rind)"]},
+      {day:"Fri",ex:"Full body moderate workout",focus:"Hormonal maintenance",foods:["Lentils + chickpeas","Sunflower seeds"]},
+      {day:"Sat",ex:"Cold shower + stretching",focus:"Dopamine recovery",foods:["Green tea","Blueberries + blackberries"]},
+      {day:"Sun",ex:"Complete rest",focus:"Full reset",foods:["Tofu or tempeh","Sweet potato"]},
+    ]},
+];
+const METRICS = [
+  {key:"erection",label:"Erection Quality",color:"#52B788"},
+  {key:"libido",label:"Libido / Desire",color:"#F4A261"},
+  {key:"energy",label:"Energy Levels",color:"#E76F51"},
+  {key:"refractory",label:"Recovery Speed",color:"#2A9D8F"},
+  {key:"morning",label:"Morning Wood",color:"#A78BFA"},
+];
+const DEF_HABITS = [
+  {id:"h1",name:"No screens 30 min before bed",cat:"Sleep",cue:"Alarm at 9:30pm",tip:"Put phone face-down when alarm fires"},
+  {id:"h2",name:"Read 10 pages before sleep",cat:"Longevity",cue:"Book on nightstand",tip:"After phone down, pick up book"},
+  {id:"h3",name:"5 min gratitude journal",cat:"Self-Control",cue:"Journal next to coffee maker",tip:"Write 3 things grateful for - nothing more"},
+  {id:"h4",name:"No alcohol today",cat:"Self-Control",cue:"Replace with sparkling water + lime",tip:"Identity: I protect my testosterone"},
+  {id:"h5",name:"Walk outside 10 min (sunlight)",cat:"Longevity",cue:"Right after first meal",tip:"Finish eating, shoes on, out the door"},
+  {id:"h6",name:"One healthy meal prepped ahead",cat:"Longevity",cue:"Sunday prep session",tip:"Just prep ONE thing - lowers friction all week"},
+  {id:"h7",name:"Cap social media at 15 min",cat:"Self-Control",cue:"Set phone screen time limit",tip:"Log out of apps after each use"},
+  {id:"h8",name:"Meaningful connection with wife",cat:"Relationship",cue:"Dinner - no phones at table",tip:"One genuine compliment or question"},
+  {id:"h9",name:"5 min visualization (goals)",cat:"Self-Control",cue:"After cold shower",tip:"Close eyes - see the outcome clearly"},
+  {id:"h10",name:"Stretch / mobility 5 min",cat:"Longevity",cue:"Right after waking up",tip:"Just hit the floor - 5 min counts"},
+];
+const HCATS = ["All","Self-Control","Longevity","Sleep","Relationship"];
+
+// ── Simple inline bar chart (no library needed) ──
+function SimpleChart({data}) {
+  if (!data || data.length < 2) return null;
+  const colors = METRICS.map(m=>m.color);
+  const keys = METRICS.map(m=>m.key);
+  const labels = METRICS.map(m=>m.label.split(" ")[0]);
+  return (
+    <div style={{overflowX:"auto"}}>
+      <div style={{minWidth:Math.max(300,data.length*60),padding:"0 4px"}}>
+        {METRICS.map((m,mi)=>(
+          <div key={m.key} style={{marginBottom:10}}>
+            <div style={{fontSize:10,color:m.color,fontWeight:700,marginBottom:3}}>{m.label}</div>
+            <div style={{display:"flex",gap:3,alignItems:"flex-end",height:50}}>
+              {data.map((d,di)=>{
+                const h = Math.round((d[m.key]/10)*46);
+                return (
+                  <div key={di} style={{display:"flex",flexDirection:"column",alignItems:"center",flex:1,minWidth:30}}>
+                    <div style={{fontSize:9,color:"#8B949E",marginBottom:2}}>{d[m.key]}</div>
+                    <div style={{width:"100%",height:h,background:m.color,borderRadius:"3px 3px 0 0",opacity:0.85}}></div>
+                    <div style={{fontSize:8,color:"#8B949E",marginTop:2,textAlign:"center"}}>{d.name}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Checkbox row ──
+function CheckRow({label,note,done,onToggle}) {
+  return (
+    <div onClick={onToggle} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"12px 13px",borderRadius:10,background:done?"#2D6A4F22":"#161B22",border:"1px solid "+(done?"#2D6A4F":"#21262D"),marginBottom:6,cursor:"pointer"}}>
+      <div style={{width:20,height:20,borderRadius:5,flexShrink:0,marginTop:1,border:"2px solid "+(done?"#52B788":"#30363D"),background:done?"#52B788":"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        {done&&<span style={{color:"#fff",fontSize:11,fontWeight:700}}>✓</span>}
+      </div>
+      <div style={{flex:1}}>
+        <div style={{fontSize:13,fontWeight:600,color:done?"#8B949E":"#E6EDF3",textDecoration:done?"line-through":"none"}}>{label}</div>
+        {note&&<div style={{fontSize:11,color:"#8B949E",marginTop:2}}>{note}</div>}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [wi, setWi] = useState(()=>getKey("wi",0));
+  const [di, setDi] = useState(()=>getKey("di",0));
+  const [checks, setChecks] = useState(()=>getKey("checks",{}));
+  const [assessments, setAssessments] = useState(()=>getKey("assessments",[]));
+  const [ca, setCa] = useState({erection:5,libido:5,energy:5,refractory:5,morning:5});
+  const [view, setView] = useState("checklist");
+  const [habits, setHabits] = useState(()=>getKey("habits",DEF_HABITS));
+  const [hChecks, setHChecks] = useState(()=>getKey("hChecks",{}));
+  const [hFilter, setHFilter] = useState("All");
+  const [expanded, setExpanded] = useState(null);
+  const [newH, setNewH] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  const week = WEEKS[wi];
+  const day = week.days[di];
+  const T = week.T;
+  const dk = wi+"-"+di;
+  const today = new Date().toISOString().slice(0,10);
+
+  const setWk = (i) => { setWi(i); setDi(0); saveKey("wi",i); saveKey("di",0); };
+  const setDk = (i) => { setDi(i); saveKey("di",i); };
+  const toggleCheck = (k) => { const n={...checks,[k]:!checks[k]}; setChecks(n); saveKey("checks",n); };
+  const toggleH = (id) => { const k=id+"-"+today; const n={...hChecks,[k]:!hChecks[k]}; setHChecks(n); saveKey("hChecks",n); };
+  const saveAssess = () => {
+    const n=[...assessments,{...ca,week:wi+1,day:di+1,name:"W"+(wi+1)+"D"+(di+1),date:new Date().toLocaleDateString()}];
+    setAssessments(n); saveKey("assessments",n); setSaved(true); setTimeout(()=>setSaved(false),1500);
+  };
+  const addH = () => {
+    if(!newH.trim()) return;
+    const n=[...habits,{id:"h"+Date.now(),name:newH.trim(),cat:"Self-Control",cue:"",tip:""}];
+    setHabits(n); saveKey("habits",n); setNewH("");
+  };
+  const removeH = (id) => { const n=habits.filter(h=>h.id!==id); setHabits(n); saveKey("habits",n); };
+  const streak = (id) => {
+    let s=0; const t=new Date();
+    for(let i=0;i<60;i++){const d=new Date(t);d.setDate(d.getDate()-i);if(hChecks[id+"-"+d.toISOString().slice(0,10)])s++;else break;}
+    return s;
+  };
+
+  const sections = [
+    {title:"Exercise",items:[{name:day.ex,note:day.focus}]},
+    {title:"Vitamins / Supplements",items:[...VITAMINS,{name:week.supp,note:"Week "+(wi+1)+" focus supplement"}]},
+    {title:"Performance Foods",items:day.foods.map(f=>({name:f,note:""}))},
+    {title:"Best Practices",items:PRACTICES.map(p=>({name:p,note:""}))},
+    {title:"Things to Avoid",items:AVOID.map(a=>({name:a,note:""}))},
+  ];
+  let tot=0,dn=0;
+  sections.forEach((s,si)=>s.items.forEach((_,ii)=>{tot++;if(checks[dk+"-"+si+"-"+ii])dn++;}));
+  const pct=tot?Math.round(dn/tot*100):0;
+  const filtH=habits.filter(h=>hFilter==="All"||h.cat===hFilter);
+  const hDone=habits.filter(h=>hChecks[h.id+"-"+today]).length;
+  const bPct=view==="habits"?(habits.length?Math.round(hDone/habits.length*100):0):pct;
+  const bLabel=view==="habits"?"Habits "+hDone+"/"+habits.length:"Today "+dn+"/"+tot;
+
+  return (
+    <div style={{background:"#0D1117",minHeight:"100vh",color:"#E6EDF3",paddingBottom:80}}>
+
+      {/* HEADER */}
+      <div style={{background:"linear-gradient(135deg,"+T+"33,#0D1117)",borderBottom:"1px solid #21262D",padding:"18px 14px 12px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+          <div>
+            <div style={{fontSize:10,letterSpacing:2,color:"#8B949E",textTransform:"uppercase",marginBottom:2}}>Performance Optimizer</div>
+            <div style={{fontSize:19,fontWeight:700,color:"#E6EDF3"}}>{week.label}</div>
+            <div style={{fontSize:12,color:"#8B949E"}}>{day.day} - {new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>
+          </div>
+          <div style={{fontSize:10,color:"#52B788",background:"#52B78818",padding:"4px 8px",borderRadius:6,border:"1px solid #52B78844"}}>Saved Locally</div>
+        </div>
+        <div style={{marginBottom:8}}>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#8B949E",marginBottom:4}}>
+            <span>{bLabel}</span><span style={{color:T,fontWeight:700}}>{bPct}%</span>
+          </div>
+          <div style={{background:"#21262D",borderRadius:4,height:5}}>
+            <div style={{background:T,width:bPct+"%",height:5,borderRadius:4,transition:"width 0.5s"}} />
+          </div>
+        </div>
+        <div style={{display:"flex",gap:6,marginBottom:6}}>
+          {WEEKS.map((_,i)=>(
+            <button key={i} onClick={()=>setWk(i)} style={{flex:1,padding:"7px 2px",borderRadius:7,border:"none",fontSize:11,fontWeight:600,background:i===wi?T:"#21262D",color:i===wi?"#fff":"#8B949E"}}>W{i+1}</button>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:5}}>
+          {week.days.map((d,i)=>(
+            <button key={i} onClick={()=>setDk(i)} style={{flex:1,padding:"7px 2px",borderRadius:7,fontSize:10,fontWeight:600,background:i===di?T+"55":"#161B22",color:i===di?"#fff":"#8B949E",border:i===di?"1px solid "+T:"1px solid #21262D"}}>{d.day}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* TABS */}
+      <div style={{display:"flex",borderBottom:"1px solid #21262D",background:"#161B22"}}>
+        {[["checklist","Daily"],["habits","Habits"],["stats","Stats"]].map(([id,lb])=>(
+          <button key={id} onClick={()=>setView(id)} style={{flex:1,padding:"11px 4px",border:"none",fontSize:12,fontWeight:600,background:"transparent",color:view===id?T:"#8B949E",borderBottom:view===id?"2px solid "+T:"2px solid transparent"}}>{lb}</button>
+        ))}
+      </div>
+
+      <div style={{padding:"14px 12px"}}>
+
+        {/* DAILY */}
+        {view==="checklist"&&sections.map((sec,si)=>(
+          <div key={si} style={{marginBottom:16}}>
+            <div style={{fontSize:11,fontWeight:700,color:T,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>{sec.title}</div>
+            {sec.items.map((item,ii)=>(
+              <CheckRow key={ii} label={item.name} note={item.note} done={!!checks[dk+"-"+si+"-"+ii]} onToggle={()=>toggleCheck(dk+"-"+si+"-"+ii)} />
+            ))}
+          </div>
+        ))}
+
+        {/* HABITS */}
+        {view==="habits"&&(
+          <div>
+            <div style={{padding:12,borderRadius:10,background:T+"18",border:"1px solid "+T+"44",marginBottom:12}}>
+              <div style={{fontSize:13,fontWeight:700,color:T,marginBottom:4}}>Atomic Habits System</div>
+              <div style={{fontSize:12,color:"#C9D1D9",lineHeight:1.6}}>Small habits compound. Each uses a cue-routine-reward loop. Tap any habit to expand. Build streaks - identity follows action.</div>
+            </div>
+            <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+              {HCATS.map(c=>(
+                <button key={c} onClick={()=>setHFilter(c)} style={{padding:"6px 11px",borderRadius:20,border:"none",fontSize:11,fontWeight:600,background:hFilter===c?T:"#21262D",color:hFilter===c?"#fff":"#8B949E"}}>{c}</button>
+              ))}
+            </div>
+            {filtH.map(h=>{
+              const done=!!hChecks[h.id+"-"+today];
+              const s=streak(h.id);
+              const exp=expanded===h.id;
+              return (
+                <div key={h.id} style={{borderRadius:10,background:done?T+"18":"#161B22",border:"1px solid "+(done?T:"#21262D"),marginBottom:7,overflow:"hidden"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:11,padding:"12px 13px"}} onClick={()=>setExpanded(exp?null:h.id)}>
+                    <div onClick={e=>{e.stopPropagation();toggleH(h.id);}} style={{width:20,height:20,borderRadius:5,flexShrink:0,border:"2px solid "+(done?T:"#30363D"),background:done?T:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      {done&&<span style={{color:"#fff",fontSize:11,fontWeight:700}}>✓</span>}
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:600,color:done?"#8B949E":"#E6EDF3",textDecoration:done?"line-through":"none"}}>{h.name}</div>
+                      <div style={{fontSize:10,color:T,marginTop:1}}>{h.cat}</div>
+                    </div>
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}}>
+                      {s>0&&<div style={{fontSize:11,color:"#F4A261",fontWeight:700}}>Streak: {s}d</div>}
+                      <div style={{fontSize:11,color:"#8B949E"}}>{exp?"▲":"▼"}</div>
+                    </div>
+                  </div>
+                  {exp&&(
+                    <div style={{padding:"0 13px 13px",borderTop:"1px solid #21262D"}}>
+                      {h.cue&&<div style={{marginTop:8}}><span style={{fontSize:11,color:T,fontWeight:700}}>CUE: </span><span style={{fontSize:12,color:"#C9D1D9"}}>{h.cue}</span></div>}
+                      {h.tip&&<div style={{marginTop:5}}><span style={{fontSize:11,color:"#F4A261",fontWeight:700}}>2-MIN: </span><span style={{fontSize:12,color:"#C9D1D9"}}>{h.tip}</span></div>}
+                      <button onClick={()=>removeH(h.id)} style={{marginTop:10,padding:"5px 10px",borderRadius:6,border:"1px solid #30363D",background:"transparent",color:"#8B949E",fontSize:11}}>Remove</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <div style={{marginTop:16,padding:13,borderRadius:10,background:"#161B22",border:"1px solid #21262D"}}>
+              <div style={{fontSize:12,fontWeight:700,color:"#8B949E",marginBottom:8}}>+ Add your own habit</div>
+              <div style={{display:"flex",gap:7}}>
+                <input value={newH} onChange={e=>setNewH(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addH()} placeholder="e.g. No sugar after 8pm" style={{flex:1,padding:"9px 11px",borderRadius:7,border:"1px solid #30363D",background:"#0D1117",color:"#E6EDF3",fontSize:13,outline:"none"}} />
+                <button onClick={addH} style={{padding:"9px 14px",borderRadius:7,border:"none",background:T,color:"#fff",fontWeight:700,fontSize:13}}>Add</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STATS */}
+        {view==="stats"&&(
+          <div>
+            <div style={{fontSize:12,color:"#8B949E",marginBottom:12}}>Rate yourself at end of each day. Graph builds as you add entries.</div>
+            <div style={{padding:13,borderRadius:10,background:"#161B22",border:"1px solid #21262D",marginBottom:16}}>
+              <div style={{fontSize:13,fontWeight:700,color:T,marginBottom:12}}>Week {wi+1}, {day.day} - Self-Assessment</div>
+              {METRICS.map(({key,label,color})=>(
+                <div key={key} style={{marginBottom:13}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                    <span style={{fontSize:12,color:"#C9D1D9"}}>{label}</span>
+                    <span style={{fontSize:12,fontWeight:700,color}}>{ca[key]}/10</span>
+                  </div>
+                  <input type="range" min={1} max={10} value={ca[key]} onChange={e=>setCa({...ca,[key]:Number(e.target.value)})} style={{width:"100%",accentColor:color}} />
+                </div>
+              ))}
+              <button onClick={saveAssess} style={{width:"100%",padding:"11px",borderRadius:9,border:"none",background:saved?"#30363D":T,color:"#fff",fontWeight:700,fontSize:13}}>{saved?"Saved!":"Save Entry"}</button>
+            </div>
+
+            {assessments.length>1&&(
+              <div style={{padding:13,borderRadius:10,background:"#161B22",border:"1px solid #21262D",marginBottom:16}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#8B949E",textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Progress Over Time</div>
+                <SimpleChart data={assessments} />
+              </div>
+            )}
+
+            {assessments.length>0?(
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:"#8B949E",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Entry History</div>
+                {assessments.slice().reverse().map((a,i)=>{
+                  const avg=Math.round((a.erection+a.libido+a.energy+a.refractory+a.morning)/5*10)/10;
+                  const wt=WEEKS[a.week-1]?.T||T;
+                  return (
+                    <div key={i} style={{padding:"11px 13px",borderRadius:10,background:"#161B22",border:"1px solid #21262D",marginBottom:7}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                        <span style={{fontSize:12,fontWeight:700,color:wt}}>Week {a.week}, Day {a.day}</span>
+                        <span style={{fontSize:11,color:"#8B949E"}}>{a.date}</span>
+                      </div>
+                      <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                        {METRICS.map(({key,label})=>(
+                          <div key={key} style={{background:"#21262D",borderRadius:5,padding:"3px 6px",fontSize:10}}>
+                            <span style={{color:"#8B949E"}}>{label.split(" ")[0]}: </span>
+                            <span style={{color:"#E6EDF3",fontWeight:700}}>{a[key]}</span>
+                          </div>
+                        ))}
+                        <div style={{background:wt+"33",borderRadius:5,padding:"3px 6px",fontSize:10}}>
+                          <span style={{color:"#8B949E"}}>Avg: </span>
+                          <span style={{color:wt,fontWeight:700}}>{avg}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ):(
+              <div style={{textAlign:"center",padding:"24px 14px",color:"#8B949E",fontSize:12}}>Save your first entry above. Graph appears after 2 entries.</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

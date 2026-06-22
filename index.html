@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="Performance"/>
+<title>Performance Optimizer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0D1117;color:#E6EDF3;font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;padding-bottom:80px}
+button{font-family:inherit;cursor:pointer;border:none}
+input{font-family:inherit}
+.hdr{padding:18px 14px 12px;border-bottom:1px solid #21262D}
+.tabs{display:flex;border-bottom:1px solid #21262D;background:#161B22}
+.tab{flex:1;padding:11px 4px;background:transparent;font-size:12px;font-weight:600;color:#8B949E;border-bottom:2px solid transparent}
+.tab.on{border-bottom:2px solid var(--T)}
+.pane{padding:14px 12px;display:none}
+.pane.on{display:block}
+.sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;color:var(--T)}
+.row{display:flex;align-items:flex-start;gap:12px;padding:12px 13px;border-radius:10px;border:1px solid #21262D;margin-bottom:6px;cursor:pointer;background:#161B22;transition:all .2s}
+.row.done{background:color-mix(in srgb,var(--T) 13%,transparent);border-color:var(--T)}
+.box{width:20px;height:20px;border-radius:5px;border:2px solid #30363D;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .2s}
+.row.done .box{background:var(--T);border-color:var(--T)}
+.lbl{font-size:13px;font-weight:600;color:#E6EDF3}
+.row.done .lbl{color:#8B949E;text-decoration:line-through}
+.note{font-size:11px;color:#8B949E;margin-top:2px}
+.prog-bar{background:#21262D;border-radius:4px;height:5px;margin:8px 0}
+.prog-fill{height:5px;border-radius:4px;background:var(--T);transition:width .5s}
+.week-btns,.day-btns{display:flex;gap:6px;margin-top:6px}
+.wbtn{flex:1;padding:7px 2px;border-radius:7px;font-size:11px;font-weight:600;background:#21262D;color:#8B949E}
+.wbtn.on{color:#fff}
+.dbtn{flex:1;padding:7px 2px;border-radius:7px;font-size:10px;font-weight:600;background:#161B22;color:#8B949E;border:1px solid #21262D}
+.dbtn.on{color:#fff;border-color:var(--T)}
+.card{padding:13px;border-radius:10px;background:#161B22;border:1px solid #21262D;margin-bottom:14px}
+.badge{font-size:10px;color:#52B788;background:#52B78818;padding:4px 8px;border-radius:6px;border:1px solid #52B78844}
+.hcat-btn{padding:6px 11px;border-radius:20px;font-size:11px;font-weight:600;background:#21262D;color:#8B949E;margin-right:6px;margin-bottom:6px}
+.hcat-btn.on{color:#fff}
+.streak{font-size:11px;color:#F4A261;font-weight:700}
+.habit-expand{padding:0 13px 13px;border-top:1px solid #21262D;display:none}
+.habit-expand.on{display:block}
+.metric-row{margin-bottom:13px}
+.metric-row label{display:flex;justify-content:space-between;font-size:12px;color:#C9D1D9;margin-bottom:4px}
+.metric-row input[type=range]{width:100%;cursor:pointer}
+.save-btn{width:100%;padding:11px;border-radius:9px;font-weight:700;font-size:13px;color:#fff}
+.entry{padding:11px 13px;border-radius:10px;background:#161B22;border:1px solid #21262D;margin-bottom:7px}
+.chip{background:#21262D;border-radius:5px;padding:3px 6px;font-size:10px;display:inline-block;margin:2px}
+.bar-chart{margin-bottom:10px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.bar-label{font-size:10px;width:90px;flex-shrink:0;color:#8B949E}
+.bar-track{flex:1;background:#21262D;border-radius:3px;height:14px;position:relative}
+.bar-fill{height:14px;border-radius:3px;transition:width .4s}
+.bar-val{font-size:10px;color:#E6EDF3;font-weight:700;min-width:20px;text-align:right}
+.addinput{flex:1;padding:9px 11px;border-radius:7px;border:1px solid #30363D;background:#0D1117;color:#E6EDF3;font-size:13px;outline:none}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ── Data ──
+const WEEKS=[
+  {label:"Week 1 - Foundation",T:"#2D6A4F",supp:"Zinc 15-25mg",
+   days:[
+    {day:"Mon",ex:"Squats 4x10 + Hip Thrusts 3x12",focus:"Testosterone trigger",foods:["Watermelon (incl. white rind)","Spinach / Arugula"]},
+    {day:"Tue",ex:"Cardio 20 min (brisk walk/jog)",focus:"Blood flow / NO production",foods:["Beets / Beet juice","Walnuts"]},
+    {day:"Wed",ex:"Push-ups 4x15 + Deadlifts (light)",focus:"Full body hormone boost",foods:["Dark chocolate 85%+","Watermelon (incl. white rind)"]},
+    {day:"Thu",ex:"Rest / Yoga / Stretching",focus:"Cortisol reduction",foods:["Spinach / Arugula","Walnuts"]},
+    {day:"Fri",ex:"Squats 4x12 + Lunges 3x10",focus:"Pelvic floor activation",foods:["Beets / Beet juice","Dark chocolate 85%+"]},
+    {day:"Sat",ex:"Kegel exercises 3x20 reps",focus:"Erection control",foods:["Watermelon (incl. white rind)","Walnuts"]},
+    {day:"Sun",ex:"Active rest (light walk)",focus:"Recovery",foods:["Spinach / Arugula","Beets / Beet juice"]},
+  ]},
+  {label:"Week 2 - Intensity Up",T:"#1B4332",supp:"Maca root 1.5-3g + Citrulline malate (optional)",
+   days:[
+    {day:"Mon",ex:"Bulgarian split squats 4x8 each leg",focus:"Glute/hip chain",foods:["Watermelon (incl. white rind)","Pomegranate juice (30ml)"]},
+    {day:"Tue",ex:"Jump rope 15 min + core work",focus:"Cardiovascular",foods:["Avocado","Oats"]},
+    {day:"Wed",ex:"Push-ups + rows (bands/dumbbells)",focus:"Upper body",foods:["Garlic","Maca root powder"]},
+    {day:"Thu",ex:"Pelvic floor work + breathwork",focus:"Parasympathetic tone",foods:["Brazil nuts (2/day)","Pomegranate juice (30ml)"]},
+    {day:"Fri",ex:"Heavy squats + hip thrusts",focus:"Peak testosterone stimulus",foods:["Watermelon (incl. white rind)","Maca root powder"]},
+    {day:"Sat",ex:"Yoga / full body stretching",focus:"Flexibility + cortisol",foods:["Avocado","Garlic"]},
+    {day:"Sun",ex:"Rest",focus:"Full recovery",foods:["Oats","Brazil nuts (2/day)"]},
+  ]},
+  {label:"Week 3 - Hormonal Peak",T:"#40916C",supp:"Zinc 20-25mg + Citrulline malate (optional)",
+   days:[
+    {day:"Mon",ex:"Squats 5x10 + Hip Thrusts 4x12",focus:"Testosterone trigger (+20%)",foods:["Watermelon (incl. white rind)","Ginger (fresh/tea)"]},
+    {day:"Tue",ex:"Cardio 25 min + sprints 3x30s",focus:"Enhanced blood flow",foods:["Hemp seeds","Cayenne pepper"]},
+    {day:"Wed",ex:"Push-ups 5x15 + Deadlifts",focus:"Full body hormone surge",foods:["Fenugreek (in smoothie)","Saffron (pinch in food)"]},
+    {day:"Thu",ex:"Rest / Yoga / Stretching",focus:"Cortisol management",foods:["Ginger (fresh/tea)","Hemp seeds"]},
+    {day:"Fri",ex:"Squats 5x12 + Lunges 4x10",focus:"Pelvic activation",foods:["Watermelon (incl. white rind)","Saffron (pinch in food)"]},
+    {day:"Sat",ex:"Kegel exercises 4x20 reps",focus:"Erection strength",foods:["Cayenne pepper","Fenugreek (in smoothie)"]},
+    {day:"Sun",ex:"Active rest + cold shower",focus:"Dopamine + T reset",foods:["Hemp seeds","Ginger (fresh/tea)"]},
+  ]},
+  {label:"Week 4 - Recovery and Reset",T:"#52B788",supp:"Magnesium glycinate 400mg + Zinc 15mg + Vitamin D3 2,000 IU",
+   days:[
+    {day:"Mon",ex:"Light walk 20 min + stretching",focus:"Active recovery",foods:["Watermelon (incl. white rind)","Lentils + chickpeas"]},
+    {day:"Tue",ex:"Yoga 30 min",focus:"Cortisol reset",foods:["Sunflower seeds","Green tea"]},
+    {day:"Wed",ex:"Breathing exercises + Kegels",focus:"Pelvic + nervous system",foods:["Blueberries + blackberries","Tofu or tempeh"]},
+    {day:"Thu",ex:"Light walk",focus:"Blood flow maintenance",foods:["Sweet potato","Watermelon (incl. white rind)"]},
+    {day:"Fri",ex:"Full body moderate workout",focus:"Hormonal maintenance",foods:["Lentils + chickpeas","Sunflower seeds"]},
+    {day:"Sat",ex:"Cold shower + stretching",focus:"Dopamine recovery",foods:["Green tea","Blueberries + blackberries"]},
+    {day:"Sun",ex:"Complete rest",focus:"Full reset",foods:["Tofu or tempeh","Sweet potato"]},
+  ]},
+];
+const VITAMINS=[
+  {n:"Garden of Life Men's Once Daily",note:"Whole food multivitamin - baseline"},
+  {n:"Zinc (extra, target 15-25mg total)",note:"Multi only gives 3.9mg - top up"},
+  {n:"Magnesium glycinate 300-400mg",note:"Before bed"},
+  {n:"Vitamin D3 2,000-4,000 IU",note:"Take if sun exposure is low"},
+];
+const AVOID=["Avoid alcohol (blocks testosterone 24-48 hrs)","No P/M - protect dopamine and refractory cycle","Avoid late-night heavy meals (disrupts sleep/T)","No less than 7-9 hrs sleep - non-negotiable"];
+const PRACTICES=["Cold shower 2-3 min","Kegel exercises (3 sets of 20)","10 min breathwork / meditation","2-3L water throughout the day"];
+const METRICS=[
+  {key:"erection",label:"Erection Quality",color:"#52B788"},
+  {key:"libido",label:"Libido / Desire",color:"#F4A261"},
+  {key:"energy",label:"Energy Levels",color:"#E76F51"},
+  {key:"refractory",label:"Recovery Speed",color:"#2A9D8F"},
+  {key:"morning",label:"Morning Wood",color:"#A78BFA"},
+];
+const DEF_HABITS=[
+  {id:"h1",name:"No screens 30 min before bed",cat:"Sleep",cue:"Alarm at 9:30pm",tip:"Put phone face-down when alarm fires"},
+  {id:"h2",name:"Read 10 pages before sleep",cat:"Longevity",cue:"Book on nightstand",tip:"After phone down, pick up book"},
+  {id:"h3",name:"5 min gratitude journal",cat:"Self-Control",cue:"Journal next to coffee maker",tip:"Write 3 things grateful for - nothing more"},
+  {id:"h4",name:"No alcohol today",cat:"Self-Control",cue:"Replace with sparkling water + lime",tip:"Identity: I protect my testosterone"},
+  {id:"h5",name:"Walk outside 10 min (sunlight)",cat:"Longevity",cue:"Right after first meal",tip:"Finish eating, shoes on, out the door"},
+  {id:"h6",name:"One healthy meal prepped ahead",cat:"Longevity",cue:"Sunday prep session",tip:"Just prep ONE thing - lowers friction all week"},
+  {id:"h7",name:"Cap social media at 15 min",cat:"Self-Control",cue:"Set phone screen time limit",tip:"Log out of apps after each use"},
+  {id:"h8",name:"Meaningful connection with wife",cat:"Relationship",cue:"Dinner - no phones at table",tip:"One genuine compliment or question"},
+  {id:"h9",name:"5 min visualization (goals)",cat:"Self-Control",cue:"After cold shower",tip:"Close eyes - see the outcome clearly"},
+  {id:"h10",name:"Stretch / mobility 5 min",cat:"Longevity",cue:"Right after waking up",tip:"Just hit the floor - 5 min counts"},
+];
+const HCATS=["All","Self-Control","Longevity","Sleep","Relationship"];
+
+// ── Storage ──
+const SK="perf_v2";
+function load(k,fb){try{const s=JSON.parse(localStorage.getItem(SK)||"{}");return s[k]!==undefined?s[k]:fb;}catch(e){return fb;}}
+function save(k,v){try{const s=JSON.parse(localStorage.getItem(SK)||"{}");s[k]=v;localStorage.setItem(SK,JSON.stringify(s));}catch(e){}}
+
+// ── State ──
+let wi=load("wi",0),di=load("di",0),view=load("view","checklist");
+let checks=load("checks",{});
+let assessments=load("assessments",[]);
+let habits=load("habits",DEF_HABITS);
+let hChecks=load("hChecks",{});
+let hFilter="All",expandedH=null;
+let curAssess={erection:5,libido:5,energy:5,refractory:5,morning:5};
+
+function today(){return new Date().toISOString().slice(0,10);}
+function streak(id){
+  let s=0;const t=new Date();
+  for(let i=0;i<60;i++){const d=new Date(t);d.setDate(d.getDate()-i);if(hChecks[id+"-"+d.toISOString().slice(0,10)])s++;else break;}
+  return s;
+}
+
+// ── Render ──
+function render(){
+  const week=WEEKS[wi],day=week.days[di],T=week.T;
+  document.documentElement.style.setProperty("--T",T);
+
+  const sections=[
+    {title:"Exercise",items:[{n:day.ex,note:day.focus}]},
+    {title:"Vitamins / Supplements",items:[...VITAMINS,{n:week.supp,note:"Week "+(wi+1)+" focus supplement"}]},
+    {title:"Performance Foods",items:day.foods.map(f=>({n:f,note:""}))},
+    {title:"Best Practices",items:PRACTICES.map(p=>({n:p,note:""}))},
+    {title:"Things to Avoid",items:AVOID.map(a=>({n:a,note:""}))},
+  ];
+  const dk=wi+"-"+di;
+  let tot=0,dn=0;
+  sections.forEach((s,si)=>s.items.forEach((_,ii)=>{tot++;if(checks[dk+"-"+si+"-"+ii])dn++;}));
+  const pct=tot?Math.round(dn/tot*100):0;
+  const hDone=habits.filter(h=>hChecks[h.id+"-"+today()]).length;
+  const bPct=view==="habits"?(habits.length?Math.round(hDone/habits.length*100):0):pct;
+  const bLabel=view==="habits"?"Habits "+hDone+"/"+habits.length:"Today "+dn+"/"+tot;
+
+  // Build week/day buttons
+  const wbtns=WEEKS.map((w,i)=>`<button class="wbtn${i===wi?" on":""}" style="${i===wi?"background:"+w.T:"background:#21262D"}" onclick="setW(${i})">W${i+1}</button>`).join("");
+  const dbtns=week.days.map((d,i)=>`<button class="dbtn${i===di?" on":""}" style="${i===di?"background:"+T+"88":""}" onclick="setD(${i})">${d.day}</button>`).join("");
+
+  // Build checklist
+  let cl="";
+  sections.forEach((sec,si)=>{
+    cl+=`<div style="margin-bottom:16px"><div class="sec-title">${sec.title}</div>`;
+    sec.items.forEach((item,ii)=>{
+      const k=dk+"-"+si+"-"+ii,isDone=!!checks[k];
+      cl+=`<div class="row${isDone?" done":""}" onclick="toggleCheck('${k}')">
+        <div class="box">${isDone?"<span style='color:#fff;font-size:11px;font-weight:700'>✓</span>":""}</div>
+        <div style="flex:1"><div class="lbl">${item.n}</div>${item.note?`<div class="note">${item.note}</div>`:""}</div>
+      </div>`;
+    });
+    cl+="</div>";
+  });
+
+  // Build habits
+  const filtH=habits.filter(h=>hFilter==="All"||h.cat===hFilter);
+  const hcatBtns=HCATS.map(c=>`<button class="hcat-btn${hFilter===c?" on":""}" style="${hFilter===c?"background:"+T+";color:#fff":""}" onclick="setHFilter('${c}')">${c}</button>`).join("");
+  let hl="";
+  filtH.forEach(h=>{
+    const isDone=!!hChecks[h.id+"-"+today()],s=streak(h.id),exp=expandedH===h.id;
+    hl+=`<div style="border-radius:10px;background:${isDone?"color-mix(in srgb,"+T+" 13%,transparent)":"#161B22"};border:1px solid ${isDone?T:"#21262D"};margin-bottom:7px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer" onclick="toggleExpand('${h.id}')">
+        <div class="box" style="${isDone?"background:"+T+";border-color:"+T:""}" onclick="event.stopPropagation();toggleH('${h.id}')">${isDone?"<span style='color:#fff;font-size:11px;font-weight:700'>✓</span>":""}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:${isDone?"#8B949E":"#E6EDF3"};text-decoration:${isDone?"line-through":"none"}">${h.name}</div>
+          <div style="font-size:10px;color:${T};margin-top:1px">${h.cat}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+          ${s>0?`<span class="streak">Streak: ${s}d</span>`:""}
+          <span style="font-size:11px;color:#8B949E">${exp?"▲":"▼"}</span>
+        </div>
+      </div>
+      ${exp?`<div style="padding:0 13px 13px;border-top:1px solid #21262D">
+        ${h.cue?`<div style="margin-top:8px"><span style="font-size:11px;color:${T};font-weight:700">CUE: </span><span style="font-size:12px;color:#C9D1D9">${h.cue}</span></div>`:""}
+        ${h.tip?`<div style="margin-top:5px"><span style="font-size:11px;color:#F4A261;font-weight:700">2-MIN: </span><span style="font-size:12px;color:#C9D1D9">${h.tip}</span></div>`:""}
+        <button style="margin-top:10px;padding:5px 10px;border-radius:6px;border:1px solid #30363D;background:transparent;color:#8B949E;font-size:11px;cursor:pointer" onclick="removeH('${h.id}')">Remove</button>
+      </div>`:""}
+    </div>`;
+  });
+
+  // Build stats
+  let statsHTML=`<div style="font-size:12px;color:#8B949E;margin-bottom:12px">Rate yourself at end of each day. Chart builds as you add entries.</div>
+  <div class="card">
+    <div style="font-size:13px;font-weight:700;color:${T};margin-bottom:12px">Week ${wi+1}, ${day.day} - Self-Assessment</div>`;
+  METRICS.forEach(m=>{
+    statsHTML+=`<div class="metric-row">
+      <label><span>${m.label}</span><span style="color:${m.color};font-weight:700" id="mv_${m.key}">${curAssess[m.key]}/10</span></label>
+      <input type="range" min="1" max="10" value="${curAssess[m.key]}" style="accent-color:${m.color}" oninput="updateAssess('${m.key}',this.value)"/>
+    </div>`;
+  });
+  statsHTML+=`<button class="save-btn" id="saveBtn" style="background:${T}" onclick="saveAssess()">Save Entry</button></div>`;
+
+  if(assessments.length>1){
+    statsHTML+=`<div class="card"><div style="font-size:11px;font-weight:700;color:#8B949E;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Progress Chart</div>`;
+    METRICS.forEach(m=>{
+      statsHTML+=`<div class="bar-chart"><div style="font-size:10px;color:${m.color};font-weight:700;margin-bottom:3px">${m.label}</div><div style="display:flex;gap:3px;align-items:flex-end">`;
+      assessments.forEach(a=>{
+        const h=Math.round(a[m.key]/10*50);
+        statsHTML+=`<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:20px">
+          <div style="font-size:8px;color:#8B949E">${a[m.key]}</div>
+          <div style="width:100%;height:${h}px;background:${m.color};border-radius:3px 3px 0 0;opacity:.85"></div>
+          <div style="font-size:7px;color:#8B949E;text-align:center">${a.name}</div>
+        </div>`;
+      });
+      statsHTML+="</div></div>";
+    });
+    statsHTML+="</div>";
+  }
+
+  if(assessments.length>0){
+    statsHTML+=`<div style="font-size:11px;font-weight:700;color:#8B949E;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">History</div>`;
+    assessments.slice().reverse().forEach(a=>{
+      const avg=Math.round((a.erection+a.libido+a.energy+a.refractory+a.morning)/5*10)/10;
+      const wt=WEEKS[a.week-1]?.T||T;
+      statsHTML+=`<div class="entry">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:700;color:${wt}">Week ${a.week}, Day ${a.day}</span>
+          <span style="font-size:11px;color:#8B949E">${a.date}</span>
+        </div>
+        <div>
+          ${METRICS.map(m=>`<span class="chip"><span style="color:#8B949E">${m.label.split(" ")[0]}: </span><span style="color:#E6EDF3;font-weight:700">${a[m.key]}</span></span>`).join("")}
+          <span class="chip" style="background:${wt}33"><span style="color:#8B949E">Avg: </span><span style="color:${wt};font-weight:700">${avg}</span></span>
+        </div>
+      </div>`;
+    });
+  } else {
+    statsHTML+=`<div style="text-align:center;padding:24px 14px;color:#8B949E;font-size:12px">Save your first entry above. Chart appears after 2 entries.</div>`;
+  }
+
+  document.getElementById("app").innerHTML=`
+    <div class="hdr" style="background:linear-gradient(135deg,${T}33,#0D1117)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <div style="font-size:10px;letter-spacing:2px;color:#8B949E;text-transform:uppercase;margin-bottom:2px">Performance Optimizer</div>
+          <div style="font-size:19px;font-weight:700">${week.label}</div>
+          <div style="font-size:12px;color:#8B949E">${day.day} - ${new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>
+        </div>
+        <div class="badge">Saved Locally</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#8B949E;margin-bottom:4px"><span>${bLabel}</span><span style="color:${T};font-weight:700">${bPct}%</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${bPct}%"></div></div>
+      <div class="week-btns">${wbtns}</div>
+      <div class="day-btns" style="gap:5px">${dbtns}</div>
+    </div>
+    <div class="tabs">
+      <button class="tab${view==="checklist"?" on":""}" style="${view==="checklist"?"color:"+T+";border-bottom-color:"+T:""}" onclick="setView('checklist')">Daily</button>
+      <button class="tab${view==="habits"?" on":""}" style="${view==="habits"?"color:"+T+";border-bottom-color:"+T:""}" onclick="setView('habits')">Habits</button>
+      <button class="tab${view==="stats"?" on":""}" style="${view==="stats"?"color:"+T+";border-bottom-color:"+T:""}" onclick="setView('stats')">Stats</button>
+    </div>
+    <div class="pane${view==="checklist"?" on":""}">${cl}</div>
+    <div class="pane${view==="habits"?" on":""}">
+      <div class="card" style="background:color-mix(in srgb,${T} 9%,transparent);border-color:${T}66;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:${T};margin-bottom:4px">Atomic Habits System</div>
+        <div style="font-size:12px;color:#C9D1D9;line-height:1.6">Small habits compound. Each uses a cue-routine-reward loop. Tap to expand. Build streaks - identity follows action.</div>
+      </div>
+      <div style="margin-bottom:12px">${hcatBtns}</div>
+      ${hl}
+      <div class="card" style="margin-top:16px">
+        <div style="font-size:12px;font-weight:700;color:#8B949E;margin-bottom:8px">+ Add your own habit</div>
+        <div style="display:flex;gap:7px">
+          <input class="addinput" id="newHabit" placeholder="e.g. No sugar after 8pm" onkeydown="if(event.key==='Enter')addH()"/>
+          <button style="padding:9px 14px;border-radius:7px;background:${T};color:#fff;font-weight:700;font-size:13px" onclick="addH()">Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="pane${view==="stats"?" on":""}">${statsHTML}</div>
+  `;
+}
+
+// ── Actions ──
+function setW(i){wi=i;di=0;save("wi",i);save("di",0);render();}
+function setD(i){di=i;save("di",i);render();}
+function setView(v){view=v;save("view",v);render();}
+function toggleCheck(k){checks[k]=!checks[k];save("checks",checks);render();}
+function toggleH(id){const k=id+"-"+today();hChecks[k]=!hChecks[k];save("hChecks",hChecks);render();}
+function toggleExpand(id){expandedH=expandedH===id?null:id;render();}
+function setHFilter(c){hFilter=c;render();}
+function removeH(id){habits=habits.filter(h=>h.id!==id);save("habits",habits);render();}
+function addH(){const el=document.getElementById("newHabit");if(!el||!el.value.trim())return;habits.push({id:"h"+Date.now(),name:el.value.trim(),cat:"Self-Control",cue:"",tip:""});save("habits",habits);render();}
+function updateAssess(k,v){curAssess[k]=Number(v);document.getElementById("mv_"+k).textContent=v+"/10";}
+function saveAssess(){
+  assessments.push({...curAssess,week:wi+1,day:di+1,name:"W"+(wi+1)+"D"+(di+1),date:new Date().toLocaleDateString()});
+  save("assessments",assessments);
+  const btn=document.getElementById("saveBtn");
+  if(btn){btn.textContent="Saved!";btn.style.background="#30363D";setTimeout(()=>render(),800);}
+  else render();
+}
+
+render();
+</script>
+</body>
+</html>

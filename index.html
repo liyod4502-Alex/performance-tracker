@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="Performance"/>
+<title>Performance Optimizer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0D1117;color:#E6EDF3;font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;padding-bottom:80px}
+button{font-family:inherit;cursor:pointer;border:none}
+input,textarea,select{font-family:inherit}
+#pinScreen{position:fixed;inset:0;background:#0D1117;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid #30363D;background:transparent;transition:all .2s}
+.pin-dot.filled{background:#52B788;border-color:#52B788}
+.pin-pad{display:grid;grid-template-columns:repeat(3,72px);gap:12px}
+.pin-btn{width:72px;height:72px;border-radius:50%;background:#161B22;border:1px solid #21262D;font-size:22px;font-weight:600;color:#E6EDF3;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.pin-btn:active{background:#21262D;transform:scale(.93)}
+.hdr{padding:16px 14px 12px;border-bottom:1px solid #21262D}
+.greeting{font-size:27px;font-weight:800;color:#E6EDF3;letter-spacing:-.5px}
+.greeting span{color:var(--T)}
+.tabs{display:flex;border-bottom:1px solid #21262D;background:#161B22;overflow-x:auto}
+.tab{flex:1;min-width:60px;padding:11px 4px;background:transparent;font-size:11px;font-weight:600;color:#8B949E;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.on{border-bottom:2px solid var(--T);color:var(--T)}
+.pane{padding:14px 12px;display:none}
+.pane.on{display:block}
+.sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;color:var(--T)}
+.row{display:flex;align-items:flex-start;gap:12px;padding:12px 13px;border-radius:10px;border:1px solid #21262D;margin-bottom:6px;background:#161B22;-webkit-tap-highlight-color:transparent}
+.row.done{border-color:var(--T)}
+.row.sex-row{border-color:#A78BFA44;background:#A78BFA0D}
+.row.sex-row.done{border-color:#A78BFA;background:#A78BFA18}
+.row.sunday{border-color:#FFD16644;background:#FFD1660D}
+.box{width:20px;height:20px;border-radius:5px;border:2px solid #30363D;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;cursor:pointer}
+.row.done .box{background:var(--T);border-color:var(--T)}
+.row.sex-row.done .box{background:#A78BFA;border-color:#A78BFA}
+.lbl{font-size:13px;font-weight:600;color:#E6EDF3}
+.row.done .lbl{color:#8B949E;text-decoration:line-through}
+.note{font-size:11px;color:#8B949E;margin-top:2px}
+.prog-bar{background:#21262D;border-radius:4px;height:6px;margin:6px 0}
+.prog-fill{height:6px;border-radius:4px;background:var(--T);transition:width .5s}
+.wbtn{flex:1;padding:7px 2px;border-radius:7px;font-size:11px;font-weight:600;background:#21262D;color:#8B949E}
+.wbtn.on{color:#fff}
+.dbtn{flex:1;padding:7px 2px;border-radius:7px;font-size:10px;font-weight:600;background:#161B22;color:#8B949E;border:1px solid #21262D}
+.dbtn.on{color:#fff;border-color:var(--T)}
+.card{padding:13px;border-radius:10px;background:#161B22;border:1px solid #21262D;margin-bottom:14px}
+.badge{font-size:10px;padding:4px 8px;border-radius:6px;border:1px solid #30363D;color:#8B949E;background:#21262D;transition:all .3s;white-space:nowrap}
+.badge.synced{color:#52B788;background:#52B78818;border-color:#52B78844}
+.badge.syncing{color:#F4A261;background:#F4A26118;border-color:#F4A26144}
+.badge.error{color:#E76F51;background:#E76F5118;border-color:#E76F5144}
+.streak{font-size:11px;color:#F4A261;font-weight:700}
+.addinput{width:100%;padding:9px 11px;border-radius:7px;border:1px solid #30363D;background:#0D1117;color:#E6EDF3;font-size:13px;outline:none;margin-bottom:8px}
+.pool-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:#21262D;margin-bottom:5px}
+.theme-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.theme-dot.active{border-color:#fff;transform:scale(1.15)}
+.modal-overlay{position:fixed;inset:0;background:#000000cc;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#161B22;border-radius:14px;border:1px solid #30363D;padding:20px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto}
+.cat-bar{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto}
+.cat-chip{padding:5px 11px;border-radius:16px;font-size:11px;font-weight:600;background:#21262D;color:#8B949E;white-space:nowrap}
+.cat-chip.on{color:#fff}
+.stat-cat-bar{height:8px;border-radius:4px;background:#21262D;margin-top:4px;margin-bottom:10px}
+.stat-cat-fill{height:8px;border-radius:4px;transition:width .5s}
+.milestone-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:700;margin-top:4px}
+
+</style>
+</head>
+<body>
+
+<!-- PIN -->
+<div id="pinScreen">
+  <div style="font-size:40px">💪</div>
+  <div style="font-size:22px;font-weight:700;color:#E6EDF3">Performance Optimizer</div>
+  <div style="font-size:13px;color:#8B949E" id="pinSub">Enter your PIN</div>
+  <div style="display:flex;gap:14px;margin:8px 0">
+    <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+  </div>
+  <div style="color:#E76F51;font-size:13px;min-height:18px" id="pinErr"></div>
+  <div class="pin-pad">
+    <button class="pin-btn" onclick="pinTap('1')">1</button><button class="pin-btn" onclick="pinTap('2')">2</button><button class="pin-btn" onclick="pinTap('3')">3</button>
+    <button class="pin-btn" onclick="pinTap('4')">4</button><button class="pin-btn" onclick="pinTap('5')">5</button><button class="pin-btn" onclick="pinTap('6')">6</button>
+    <button class="pin-btn" onclick="pinTap('7')">7</button><button class="pin-btn" onclick="pinTap('8')">8</button><button class="pin-btn" onclick="pinTap('9')">9</button>
+    <button class="pin-btn" style="visibility:hidden"></button><button class="pin-btn" onclick="pinTap('0')">0</button><button class="pin-btn" onclick="pinDel()">&#9003;</button>
+  </div>
+</div>
+
+<!-- HABIT MODAL -->
+<div class="modal-overlay" id="habitModal" style="display:none">
+  <div class="modal">
+    <div style="font-size:15px;font-weight:700;color:#E6EDF3;margin-bottom:14px" id="hModalTitle">Habit</div>
+    <input class="addinput" id="hName" placeholder="Habit name"/>
+    <input class="addinput" id="hCue" placeholder="Cue - what triggers this habit"/>
+    <input class="addinput" id="hTip" placeholder="2-min rule - smallest action to start"/>
+    <select id="hCat" style="width:100%;padding:9px;border-radius:7px;border:1px solid #30363D;background:#0D1117;color:#E6EDF3;font-size:13px;outline:none;margin-bottom:12px">
+      <option value="Spiritual">Spiritual</option>
+      <option value="Trading">Trading</option>
+      <option value="Longevity">Longevity</option>
+      <option value="Sleep">Sleep</option>
+    </select>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeHModal()" style="flex:1;padding:10px;border-radius:8px;background:#21262D;color:#8B949E;font-size:13px">Cancel</button>
+      <button onclick="saveHModal()" style="flex:1;padding:10px;border-radius:8px;background:var(--T);color:#fff;font-weight:700;font-size:13px">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- POOL MODAL -->
+<div class="modal-overlay" id="poolModal" style="display:none">
+  <div class="modal">
+    <div style="font-size:15px;font-weight:700;color:#E6EDF3;margin-bottom:4px" id="poolModalTitle">Manage Pool</div>
+    <div style="font-size:12px;color:#8B949E;margin-bottom:14px" id="poolModalSub">Items rotate through the weeks</div>
+    <div id="poolList"></div>
+    <input class="addinput" id="poolNewName" placeholder="Item name / description"/>
+    <input class="addinput" id="poolNewNote" placeholder="Detail or quantity (optional)"/>
+    <div style="display:flex;gap:8px">
+      <button onclick="closePoolModal()" style="flex:1;padding:10px;border-radius:8px;background:#21262D;color:#8B949E;font-size:13px">Done</button>
+      <button onclick="addPoolItem()" style="flex:1;padding:10px;border-radius:8px;background:var(--T);color:#fff;font-weight:700;font-size:13px">Add</button>
+    </div>
+  </div>
+</div>
+
+<div id="app" style="display:none"></div>
+
+<script>
+// ── FIREBASE ──
+const FB_KEY="AIzaSyBIfr_M8zNVc5iHyoBI4SH9DQR2SHFUPf8";
+const FB_PROJ="performance-optimizer-52a6d";
+const FB_DOC="https://firestore.googleapis.com/v1/projects/"+FB_PROJ+"/databases/(default)/documents/tracker/shared";
+
+// ── STORAGE ──
+const SK="perf_v5";
+function loadAll(){try{return JSON.parse(localStorage.getItem(SK)||"{}");}catch(e){return {};}}
+function saveLocal(k,v){try{const s=loadAll();s[k]=v;localStorage.setItem(SK,JSON.stringify(s));}catch(e){}}
+function getLocal(k,fb){const v=loadAll()[k];return v!==undefined?v:fb;}
+function persist(k,v){saveLocal(k,v);scheduleSave();}
+
+// ── SYNC ──
+let syncTimer=null;
+function scheduleSave(){clearTimeout(syncTimer);syncTimer=setTimeout(pushFB,2000);setBadge("syncing","Syncing...");}
+async function pushFB(){
+  try{
+    const data=loadAll();data._saved=Date.now();saveLocal("_saved",data._saved);
+    const r=await fetch(FB_DOC+"?updateMask.fieldPaths=payload",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{payload:{stringValue:JSON.stringify(data)}}})});
+    setBadge(r.ok?"synced":"error",r.ok?"Synced":"Sync error");
+  }catch(e){setBadge("error","Offline");}
+}
+async function pullFB(){
+  try{
+    const r=await fetch(FB_DOC);if(!r.ok)return null;
+    const j=await r.json();
+    return j.fields&&j.fields.payload?JSON.parse(j.fields.payload.stringValue):null;
+  }catch(e){return null;}
+}
+function setBadge(cls,txt){const b=document.getElementById("badge");if(b){b.className="badge"+(cls?" "+cls:"");b.textContent=txt;}}
+async function initSync(){
+  setBadge("syncing","Connecting...");
+  const fb=await pullFB();
+  if(fb&&fb._saved&&fb._saved>getLocal("_saved",0)){
+    ["checks","habits","hChecks","sexLog","dailyScores","themeIdx","pools","cycleStart"].forEach(k=>{if(fb[k]!==undefined)saveLocal(k,fb[k]);});
+    saveLocal("_saved",fb._saved);
+    loadState();render();
+  }
+  setBadge("synced","Synced");
+}
+
+// ── PIN ──
+let pinBuffer="",pinMode="enter",pinNewTemp="";
+function getPin(){return localStorage.getItem("app_pin")||"1234";}
+function savePin(p){localStorage.setItem("app_pin",p);}
+function pinTap(d){if(pinBuffer.length>=4)return;pinBuffer+=d;updateDots();if(pinBuffer.length===4)setTimeout(checkPin,120);}
+function pinDel(){pinBuffer=pinBuffer.slice(0,-1);updateDots();document.getElementById("pinErr").textContent="";}
+function updateDots(){for(let i=0;i<4;i++)document.getElementById("d"+i).className="pin-dot"+(i<pinBuffer.length?" filled":"");}
+function checkPin(){
+  if(pinMode==="enter"){
+    if(pinBuffer===getPin()){
+      document.getElementById("pinScreen").style.display="none";
+      document.getElementById("app").style.display="block";
+      loadState();render();initSync();
+    }else{document.getElementById("pinErr").textContent="Incorrect PIN.";pinBuffer="";updateDots();}
+  }else if(pinMode==="set_new"){
+    pinNewTemp=pinBuffer;pinBuffer="";updateDots();
+    pinMode="confirm_new";document.getElementById("pinSub").textContent="Confirm new PIN";
+  }else if(pinMode==="confirm_new"){
+    if(pinBuffer===pinNewTemp){
+      savePin(pinBuffer);pinBuffer="";pinMode="enter";
+      document.getElementById("pinScreen").style.display="none";
+      document.getElementById("app").style.display="block";
+    }else{
+      document.getElementById("pinErr").textContent="PINs don't match.";
+      pinBuffer="";pinMode="set_new";updateDots();
+      document.getElementById("pinSub").textContent="Enter new PIN";
+    }
+  }
+}
+function startChangePin(){
+  document.getElementById("app").style.display="none";
+  document.getElementById("pinScreen").style.display="flex";
+  pinMode="set_new";pinBuffer="";updateDots();
+  document.getElementById("pinSub").textContent="Enter new PIN";
+  document.getElementById("pinErr").textContent="";
+}
+
+// ── THEMES ──
+const THEMES=[
+  {name:"Forest",T:"#2D6A4F",acc:"#52B788"},
+  {name:"Ocean",T:"#1A6B8A",acc:"#48CAE4"},
+  {name:"Ember",T:"#C1440E",acc:"#F4A261"},
+  {name:"Violet",T:"#6B3FA0",acc:"#A78BFA"},
+  {name:"Gold",T:"#B5860D",acc:"#FFD166"},
+  {name:"Rose",T:"#9B2335",acc:"#F28FAD"},
+];
+let themeIdx=0;
+function applyTheme(){const t=THEMES[themeIdx];document.documentElement.style.setProperty("--T",t.T);document.documentElement.style.setProperty("--A",t.acc);}
+function setTheme(i){themeIdx=i;applyTheme();persist("themeIdx",i);render();}
+
+// ── GREETING ──
+function greeting(){const h=new Date().getHours();return h<12?"Good morning":h<17?"Good afternoon":h<21?"Good evening":"Good night";}
+
+// ── DATE HELPERS ──
+function localDateStr(d){var yr=d.getFullYear(),mo=String(d.getMonth()+1).padStart(2,"0"),dy=String(d.getDate()).padStart(2,"0");return yr+"-"+mo+"-"+dy;}
+function todayStr(){return localDateStr(new Date());}
+function dateStr(d){return localDateStr(d);}
+// Get day index 0=Mon..6=Sun from a date string
+function getDayIdx(ds){const d=new Date(ds);return(d.getDay()+6)%7;}
+function isSunday(ds){var p=ds.split("-").map(Number);return new Date(p[0],p[1]-1,p[2]).getDay()===0;}
+
+// ── CYCLE / WEEK LOGIC ──
+// Each "week" in the program is Mon-Sun
+// We track a cycleStart date (first Monday of the program)
+// From any date we can compute which program week (1-4) and which day
+function getCycleStart(){
+  let cs=getLocal("cycleStart",null);
+  if(!cs){
+    // Default to most recent Monday
+    const now=new Date();
+    const day=now.getDay();
+    const diff=day===0?-6:1-day;
+    const mon=new Date(now);mon.setDate(now.getDate()+diff);
+    cs=dateStr(mon);saveLocal("cycleStart",cs);
+  }
+  return cs;
+}
+function resetCycle(){
+  const now=new Date();
+  const day=now.getDay();
+  const diff=day===0?-6:1-day;
+  const mon=new Date(now);mon.setDate(now.getDate()+diff);
+  const cs=dateStr(mon);
+  persist("cycleStart",cs);
+  return cs;
+}
+function getProgramWeekForDate(ds){
+  const cs=getCycleStart();
+  const start=new Date(cs);
+  const target=new Date(ds);
+  const diffDays=Math.floor((target-start)/(1000*60*60*24));
+  if(diffDays<0)return{week:0,day:0};
+  const programDay=diffDays%28; // 4 weeks * 7 days = 28 day cycle, then loops
+  const week=Math.floor(programDay/7);
+  const day=programDay%7;
+  return{week,day};
+}
+
+// ── WEEKS DATA ──
+const WEEK_LABELS=["Week 1 - Foundation","Week 2 - Intensity Up","Week 3 - Hormonal Peak","Week 4 - Recovery & Reset"];
+const DAY_NAMES=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+// Exercise pool per week (pools can be extended by user)
+const DEFAULT_EXERCISE_POOLS=[
+  ["Squats 4x10 + Hip Thrusts 3x12|Testosterone trigger",
+   "Cardio 20 min brisk walk or jog|Blood flow and NO production",
+   "Push-ups 4x15 + Deadlifts light|Full body hormone boost",
+   "Rest + Yoga + Stretching|Cortisol reduction",
+   "Squats 4x12 + Lunges 3x10|Pelvic floor activation",
+   "Kegel exercises 3x20 reps|Erection control",
+   "REST DAY - Light walk optional|Full rest and recovery"],
+  ["Bulgarian split squats 4x8 each leg|Glute and hip chain",
+   "Jump rope 15 min + core work|Cardiovascular",
+   "Push-ups + rows with bands or dumbbells|Upper body",
+   "Pelvic floor work + breathwork|Parasympathetic tone",
+   "Heavy squats + hip thrusts|Peak testosterone stimulus",
+   "Yoga and full body stretching|Flexibility and cortisol",
+   "REST DAY - Light walk optional|Full rest and recovery"],
+  ["Squats 5x10 + Hip Thrusts 4x12|Testosterone trigger +20%",
+   "Cardio 25 min + sprints 3x30s|Enhanced blood flow",
+   "Push-ups 5x15 + Deadlifts|Full body hormone surge",
+   "Rest + Yoga + Stretching|Cortisol management",
+   "Squats 5x12 + Lunges 4x10|Pelvic activation",
+   "Kegel exercises 4x20 reps|Erection strength",
+   "REST DAY - Cold shower + stretching|Dopamine and T reset"],
+  ["Light walk 20 min + stretching|Active recovery",
+   "Yoga 30 min|Cortisol reset",
+   "Breathing exercises + Kegels|Pelvic and nervous system",
+   "Light walk|Blood flow maintenance",
+   "Full body moderate workout|Hormonal maintenance",
+   "Cold shower + stretching|Dopamine recovery",
+   "REST DAY - Complete rest|Full reset"],
+];
+
+const DEFAULT_VITAMIN_POOLS=[
+  ["Garden of Life Men's Once Daily|Take with breakfast",
+   "Vitamin D3 2,000-4,000 IU|Take with food - low D = low T",
+   "L-Citrulline 3g in water|Nitric oxide production - blood flow",
+   "Zinc 15-25mg supplement|Critical - replenish daily",
+   "Magnesium glycinate 300mg|Before bed - sleep quality + testosterone"],
+  ["Garden of Life Men's Once Daily|Take with breakfast",
+   "Vitamin D3 2,000-4,000 IU|Take with food - low D = low T",
+   "L-Citrulline 4g in water|Increased NO - intensity week",
+   "Maca root 1.5g|Libido and endurance",
+   "Zinc 20mg supplement|Elevated need - intensity week"],
+  ["Garden of Life Men's Once Daily|Take with breakfast",
+   "Vitamin D3 2,000-4,000 IU|Take with food - low D = low T",
+   "L-Citrulline 5g in water|Peak NO protocol",
+   "Fenugreek 1 tsp|Testosterone optimization",
+   "Hemp seeds 3 tbsp|Zinc + omega-3 + protein"],
+  ["Garden of Life Men's Once Daily|Take with breakfast",
+   "Vitamin D3 2,000-4,000 IU|Take with food - low D = low T",
+   "L-Citrulline 3g in water|Maintenance NO protocol",
+   "Magnesium glycinate 400mg|Recovery week - sleep priority",
+   "Zinc 15mg supplement|Maintenance level"],
+];
+
+// Foods pool - shared across all weeks, user can add
+const DEFAULT_FOOD_POOL=[
+  "Watermelon 2 cups - natural citrulline",
+  "Spinach large handful - iron and nitrates",
+  "Beet juice 200ml or 2 cooked beets",
+  "Walnuts 30g - arginine and omega-3",
+  "Dark chocolate 85%+ 2 squares - flavonoids",
+  "Pomegranate juice 150ml - proven NO booster",
+  "Avocado half - healthy fats and vitamin E",
+  "Oats 1 cup with seeds - arginine",
+  "Garlic 2 cloves - vasodilation",
+  "Maca root 1 tsp in smoothie - libido",
+  "Brazil nuts 2 only - selenium",
+  "Ginger 1 inch fresh in tea - testosterone",
+  "Hemp seeds 3 tbsp - zinc and omega-3",
+  "Saffron small pinch in food - erectile support",
+  "Blueberries 1 cup - dopamine support",
+  "Lentils 1 cup cooked - zinc and protein",
+  "Sunflower seeds 30g - zinc replenishment",
+  "Green tea 2 cups - L-theanine",
+  "Sweet potato 1 medium - vitamin A",
+  "Cayenne pepper pinch - capsaicin circulation",
+];
+
+// ── POOLS STATE ──
+let pools={};
+function initPools(){
+  const saved=getLocal("pools",null);
+  if(saved){pools=saved;return;}
+  pools={
+    exercise:DEFAULT_EXERCISE_POOLS.map(w=>w.map(s=>{const[n,note]=s.split("|");return{n,note};})),
+    vitamins:DEFAULT_VITAMIN_POOLS.map(w=>w.map(s=>{const[n,note]=s.split("|");return{n,note};})),
+    foods:DEFAULT_FOOD_POOL.map(s=>({n:s,note:""})),
+  };
+  saveLocal("pools",pools);
+}
+
+// Get item from pool for given week+day, deterministically rotating
+function poolItem(poolArr,weekIdx,dayIdx,slot){
+  if(!poolArr||!poolArr.length)return{n:"Rest",note:""};
+  const idx=(weekIdx*7+dayIdx+slot*3)%poolArr.length;
+  return poolArr[idx];
+}
+
+// Exercise: one per day, from week pool
+function getExercise(weekIdx,dayIdx){
+  const wp=pools.exercise?pools.exercise[weekIdx]:[];
+  if(!wp||!wp.length)return{n:"Rest",note:""};
+  // Sunday (dayIdx 6) always rest
+  if(dayIdx===6)return wp.find(e=>e.n.startsWith("REST"))||{n:"Rest - full recovery",note:""};
+  return wp[dayIdx]||{n:"Rest",note:""};
+}
+
+// Vitamins: 2 per day rotating from week pool
+function getVitamins(weekIdx,dayIdx){
+  const wp=pools.vitamins?pools.vitamins[weekIdx]:[];
+  if(!wp||!wp.length)return[];
+  const i1=(weekIdx*7+dayIdx)%wp.length;
+  const i2=(weekIdx*7+dayIdx+1)%wp.length;
+  return[wp[i1],wp[i2===i1?(i2+1)%wp.length:i2]];
+}
+
+// Foods: 2 per day rotating from shared pool
+function getFoods(weekIdx,dayIdx){
+  const fp=pools.foods||[];
+  if(!fp.length)return[];
+  const i1=(weekIdx*7+dayIdx*2)%fp.length;
+  const i2=(weekIdx*7+dayIdx*2+1)%fp.length;
+  return[fp[i1],fp[i2===i1?(i2+1)%fp.length:i2]];
+}
+
+// ── HABITS STATE ──
+const DEFAULT_HABITS={
+  Spiritual:[
+    {id:"sp1",name:"Prayer Rope - Lord Jesus Christ, Have Mercy on me Sinner!",cue:"Right after waking, before phone",tip:"Hold prayer rope, one bead per prayer - start with 10"},
+    {id:"sp2",name:"Morning prayer or Bible reading 10 min",cue:"Before breakfast",tip:"Open Scripture before anything else"},
+    {id:"sp3",name:"Evening Vespers or Compline prayer",cue:"After dinner, lights low",tip:"Even 5 min of stillness counts"},
+    {id:"sp4",name:"Gratitude - Pray or Read Bible",cue:"With morning coffee",tip:"Write 3 blessings from yesterday"},
+    {id:"sp5",name:"Fasting or no food before noon",cue:"Wake up - delay breakfast",tip:"Orthodox tradition - clarity of mind and spirit"},
+  ],
+  Trading:[
+    {id:"tr1",name:"Pre-market review 30 min before open",cue:"8:00am alarm - before 8:30 CT",tip:"Check bias, FVG levels, news - no trades yet"},
+    {id:"tr2",name:"Trading journal entry after session",cue:"Right after market close",tip:"Grade the trade: setup, entry, exit, emotion"},
+    {id:"tr3",name:"Sunday ICT bias and weekly draw review",cue:"Sunday evening ritual",tip:"Mark PDH/PDL, FVGs, weekly draw on liquidity"},
+    {id:"tr4",name:"No trades outside AM session 8:50-11am CT",cue:"Set alarm for 11am - stop trading",tip:"Best ICT setups happen in the AM window only"},
+    {id:"tr5",name:"Review losing trades with no emotion",cue:"End of week Friday",tip:"What was the setup grade? Was process followed?"},
+  ],
+  Longevity:[
+    {id:"lo1",name:"Walk outside 10 min - sunlight",cue:"Right after first meal",tip:"Shoes on as soon as you finish eating"},
+    {id:"lo2",name:"Read 10 pages before sleep",cue:"Book on nightstand",tip:"After phone down - pick up book"},
+    {id:"lo3",name:"Stretch and mobility 5 min",cue:"Right after waking up",tip:"Just get on the floor - 5 min counts"},
+    {id:"lo4",name:"One healthy meal prepped ahead",cue:"Sunday prep session",tip:"Just prep ONE thing - lowers friction all week"},
+    {id:"lo5",name:"Cold shower 2-3 min",cue:"Right before getting dressed",tip:"Boosts dopamine and testosterone - start warm then cold"},
+  ],
+  Sleep:[
+    {id:"sl1",name:"No screens 30 min before bed",cue:"9:30pm alarm",tip:"Phone face-down, pick up book or Scripture"},
+    {id:"sl2",name:"Bedroom dark and cool before sleep",cue:"When you brush teeth",tip:"Set thermostat 65-68F, blackout curtains"},
+    {id:"sl3",name:"In bed by 10pm",cue:"9:45pm alarm - wrap up",tip:"Testosterone peaks 10pm-2am in deep sleep"},
+    {id:"sl4",name:"No caffeine after 2pm",cue:"Last coffee at lunch",tip:"Caffeine half-life is 6 hrs - kills sleep quality"},
+  ],
+};
+
+const HAB_CATS=["Spiritual","Trading","Longevity","Sleep"];
+const HAB_COLORS={Spiritual:"#A78BFA",Trading:"#48CAE4",Longevity:"#52B788",Sleep:"#F4A261"};
+
+let habits={};
+function initHabits(){
+  const saved=getLocal("habits",null);
+  habits=saved||JSON.parse(JSON.stringify(DEFAULT_HABITS));
+}
+
+// Get 1 habit per category for a given date, rotating
+function getDayHabits(ds){
+  // Use LOCAL date num to avoid timezone drift
+  var p=ds.split("-").map(Number);
+  var dayNum=Math.floor(new Date(p[0],p[1]-1,p[2]).getTime()/(1000*60*60*24));
+  const result=[];
+  HAB_CATS.forEach(cat=>{
+    const catHabits=habits[cat]||[];
+    if(!catHabits.length)return;
+    if(isSunday(ds)){
+      // Sunday: only Spiritual and Sleep
+      if(cat==="Spiritual"||cat==="Sleep"){
+        // Rotate DAILY within category
+        const idx=dayNum%catHabits.length;
+        result.push({...catHabits[idx],cat});
+      }
+    }else{
+      // Rotate DAILY within category
+      const idx=dayNum%catHabits.length;
+      result.push({...catHabits[idx],cat});
+    }
+  });
+  return result;
+}
+
+// ── RECOVERY DATA ──
+const RECOVERY_DAYS={
+  0:[
+    {n:"Zinc: hemp seeds 3 tbsp or sunflower seeds 30g",note:"Critical - zinc lost, replenish immediately"},
+    {n:"Watermelon 2 cups + L-Citrulline 5g in water",note:"Maximum NO production for blood flow"},
+    {n:"Cold shower 3-5 min",note:"Dopamine reset and testosterone boost"},
+    {n:"Sleep 8+ hrs tonight",note:"Most critical recovery night - do not skip"},
+    {n:"Kegel exercises 4x20",note:"Pelvic floor recovery and strengthening"},
+  ],
+  1:[
+    {n:"Light cardio only - 20 min walk",note:"Blood flow without taxing recovery"},
+    {n:"Beet juice 200ml + pomegranate juice 150ml",note:"Dual NO boost for circulation"},
+    {n:"Ginger tea 2 cups",note:"Testosterone support and anti-inflammatory"},
+    {n:"Avoid heavy lifting today",note:"Give testosterone time to rebuild"},
+    {n:"Maca root 1.5 tsp in smoothie",note:"Libido rebuilding starts now"},
+  ],
+  2:[
+    {n:"Moderate workout - squats and hip thrusts",note:"Testosterone stimulus as you near readiness"},
+    {n:"Saffron pinch in food",note:"Proven erectile function support"},
+    {n:"Fenugreek 1 tsp in smoothie",note:"Testosterone optimization"},
+    {n:"Pomegranate juice 150ml",note:"Sustained NO production"},
+    {n:"Assess readiness - 3 days post recovery target",note:"You should be at peak performance"},
+  ],
+};
+
+// ── MAIN STATE ──
+let checks={},hChecks={},sexLog=[],dailyScores={},view="daily",expandedH=null,hModalId=null,poolModalType=null,poolModalWeek=null;
+let hFilter="All";
+// Aliases for render function
+const HCATS=HAB_CATS;
+// Build WEEKS array with day names for nav buttons
+const WEEKS=(function(){
+  return WEEK_LABELS.map(function(label,wi){
+    return {
+      label:label,
+      days:DAY_NAMES.map(function(d){return {day:d};})
+    };
+  });
+})();
+
+function loadState(){
+  checks=getLocal("checks",{});
+  hChecks=getLocal("hChecks",{});
+  sexLog=getLocal("sexLog",[]);
+  dailyScores=getLocal("dailyScores",{});
+  themeIdx=getLocal("themeIdx",0);
+  pools=getLocal("pools",null);
+  if(!pools){initPools();}
+  applyTheme();
+  // Load habits - detect old array format vs new object format
+  var savedHabits=getLocal("habits",null);
+  if(!savedHabits||Array.isArray(savedHabits)){
+    // Old format or missing - use defaults
+    habits=JSON.parse(JSON.stringify(DEFAULT_HABITS));
+    persist("habits",habits);
+  }else if(typeof savedHabits==="object"&&!savedHabits.Spiritual){
+    // Object but missing Spiritual key - merge with defaults
+    habits=JSON.parse(JSON.stringify(DEFAULT_HABITS));
+    persist("habits",habits);
+  }else{
+    habits=savedHabits;
+  }
+}
+
+// ── SELECTED DATE ──
+let selectedDate=todayStr();
+
+function daysSinceLastSex(){
+  if(!sexLog.length)return null;
+  const sorted=[...sexLog].sort().reverse();
+  const last=new Date(sorted[0]);const now=new Date(selectedDate);
+  return Math.floor((now-last)/(1000*60*60*24));
+}
+function loggedSexOn(ds){return sexLog.includes(ds);}
+function toggleSexLog(){
+  if(loggedSexOn(selectedDate)){sexLog=sexLog.filter(d=>d!==selectedDate);}
+  else{sexLog=[...sexLog,selectedDate];}
+  persist("sexLog",sexLog);saveScore();render();
+}
+
+// ── STREAK ──
+function streak(id){
+  let s=0;const t=new Date();
+  for(let i=0;i<60;i++){const d=new Date(t);d.setDate(d.getDate()-i);if(hChecks[id+"-"+dateStr(d)])s++;else break;}
+  return s;
+}
+
+// ── SCORING ──
+function getSections(ds){
+  const{week,day}=getProgramWeekForDate(ds);
+  const ex=getExercise(week,day);
+  const vits=getVitamins(week,day);
+  const foods=isSunday(ds)?[]:getFoods(week,day);
+  const secs=[];
+  if(!isSunday(ds)){
+    secs.push({key:"exercise",title:"Exercise",items:[ex]});
+    secs.push({key:"vitamins",title:"Vitamins / Supplements",items:vits});
+    secs.push({key:"foods",title:"Performance Foods",items:foods});
+  }else{
+    secs.push({key:"exercise",title:"Exercise (Rest Day)",items:[ex]});
+  }
+  return secs;
+}
+
+function computeScore(ds){
+  const secs=getSections(ds);
+  const dayH=getDayHabits(ds);
+  let tot=0,dn=0;
+  secs.forEach((sec,si)=>sec.items.forEach((_,ii)=>{
+    tot++;if(checks[ds+"-"+si+"-"+ii])dn++;
+  }));
+  dayH.forEach(h=>{tot++;if(hChecks[h.id+"-"+ds])dn++;});
+  return tot?Math.round(dn/tot*100):0;
+}
+
+function computeCatScores(ds){
+  const scores={};
+  HAB_CATS.forEach(cat=>{
+    const catH=(habits[cat]||[]);
+    const dayH=getDayHabits(ds).filter(h=>h.cat===cat);
+    let tot=dayH.length,dn=0;
+    dayH.forEach(h=>{if(hChecks[h.id+"-"+ds])dn++;});
+    scores[cat]=tot?Math.round(dn/tot*100):0;
+  });
+  return scores;
+}
+
+function saveScore(){
+  const score=computeScore(selectedDate);
+  const cats=computeCatScores(selectedDate);
+  const{week,day}=getProgramWeekForDate(selectedDate);
+  dailyScores[selectedDate]={score,week,day,cats};
+  persist("dailyScores",dailyScores);
+}
+
+// ── POOL MODAL ──
+let poolCtx=null;
+function openPoolModal(type,weekIdx){
+  poolCtx={type,weekIdx};
+  document.getElementById("poolModalTitle").textContent=
+    type==="exercise"?"Exercise Pool - Week "+(weekIdx+1):
+    type==="vitamins"?"Vitamins Pool - Week "+(weekIdx+1):
+    "Performance Foods Pool";
+  document.getElementById("poolModalSub").textContent="Items rotate through each day of the week";
+  document.getElementById("poolNewName").value="";
+  document.getElementById("poolNewNote").value="";
+  renderPoolList();
+  document.getElementById("poolModal").style.display="flex";
+}
+function closePoolModal(){document.getElementById("poolModal").style.display="none";poolCtx=null;render();}
+function getPoolArr(){
+  if(!poolCtx)return[];
+  if(poolCtx.type==="exercise")return pools.exercise[poolCtx.weekIdx]||[];
+  if(poolCtx.type==="vitamins")return pools.vitamins[poolCtx.weekIdx]||[];
+  return pools.foods||[];
+}
+function setPoolArr(arr){
+  if(!poolCtx)return;
+  if(poolCtx.type==="exercise")pools.exercise[poolCtx.weekIdx]=arr;
+  else if(poolCtx.type==="vitamins")pools.vitamins[poolCtx.weekIdx]=arr;
+  else pools.foods=arr;
+  persist("pools",pools);
+}
+function renderPoolList(){
+  const arr=getPoolArr();
+  const T=THEMES[themeIdx].T;
+  document.getElementById("poolList").innerHTML=arr.map((item,i)=>`
+    <div class="pool-item">
+      <div><div style="font-size:12px;color:#E6EDF3;font-weight:600">${item.n}</div>${ item.note ? '<div style="font-size:10px;color:#8B949E">'+item.note+'</div>' : '' }</div>
+      <button onclick="removePoolItem(${i})" style="padding:4px 8px;border-radius:5px;border:1px solid #30363D;background:transparent;color:#E76F51;font-size:11px">✕</button>
+    </div>`).join("")||`<div style="text-align:center;padding:16px;color:#8B949E;font-size:12px">No items yet. Add below.</div>`;
+}
+function addPoolItem(){
+  const n=document.getElementById("poolNewName").value.trim();
+  if(!n)return;
+  const note=document.getElementById("poolNewNote").value.trim();
+  const arr=getPoolArr();arr.push({n,note});
+  setPoolArr(arr);
+  document.getElementById("poolNewName").value="";
+  document.getElementById("poolNewNote").value="";
+  renderPoolList();
+}
+function removePoolItem(i){const arr=getPoolArr();arr.splice(i,1);setPoolArr(arr);renderPoolList();}
+
+// ── HABIT MODAL ──
+function openHModal(id,cat){
+  hModalId=id;
+  const isNew=id==="new";
+  let h=isNew?{name:"",cue:"",tip:"",cat:cat||"Spiritual"}:null;
+  if(!isNew){HAB_CATS.forEach(c=>{const f=(habits[c]||[]).find(x=>x.id===id);if(f)h={...f,cat:c};});}
+  document.getElementById("hModalTitle").textContent=isNew?"Add Habit":"Edit Habit";
+  document.getElementById("hName").value=h.name||"";
+  document.getElementById("hCue").value=h.cue||"";
+  document.getElementById("hTip").value=h.tip||"";
+  document.getElementById("hCat").value=h.cat||"Spiritual";
+  document.getElementById("habitModal").style.display="flex";
+}
+function closeHModal(){document.getElementById("habitModal").style.display="none";hModalId=null;}
+function saveHModal(){
+  const name=document.getElementById("hName").value.trim();if(!name)return;
+  const cue=document.getElementById("hCue").value.trim();
+  const tip=document.getElementById("hTip").value.trim();
+  const cat=document.getElementById("hCat").value;
+  if(hModalId==="new"){
+    if(!habits[cat])habits[cat]=[];
+    habits[cat].push({id:"h"+Date.now(),name,cue,tip});
+  }else{
+    HAB_CATS.forEach(c=>{
+      const idx=(habits[c]||[]).findIndex(x=>x.id===hModalId);
+      if(idx>=0){
+        // Move to new cat if changed
+        const h=habits[c][idx];
+        habits[c].splice(idx,1);
+        if(!habits[cat])habits[cat]=[];
+        habits[cat].push({...h,name,cue,tip});
+      }
+    });
+  }
+  persist("habits",habits);closeHModal();render();
+}
+function removeHabit(id){
+  HAB_CATS.forEach(c=>{habits[c]=(habits[c]||[]).filter(h=>h.id!==id);});
+  persist("habits",habits);render();
+}
+
+// ── NAVIGATE DATES ──
+function changeDate(delta){
+  const d=new Date(selectedDate);d.setDate(d.getDate()+delta);
+  selectedDate=dateStr(d);render();
+}
+
+// ── STREAK MILESTONE ──
+function getStreakMilestone(s){
+  if(s>=30)return{label:"30-Day Legend",icon:"🏆",color:"#FFD166"};
+  if(s>=14)return{label:"2-Week Warrior",icon:"🔥",color:"#F4A261"};
+  if(s>=7)return{label:"1-Week Strong",icon:"⭐",color:"#52B788"};
+  if(s>=3)return{label:"3-Day Streak",icon:"✨",color:"#48CAE4"};
+  return null;
+}
+
+// ── WEEKLY SUMMARY (Sunday) ──
+function getWeeklySummary(){
+  const today=todayStr();
+  const todayDate=new Date();
+  // Get Mon-Sat of this week
+  const dayOfWeek=todayDate.getDay(); // 0=Sun
+  const weekDates=[];
+  for(let i=1;i<=6;i++){
+    const d=new Date(todayDate);
+    d.setDate(todayDate.getDate()-(dayOfWeek===0?7-i:dayOfWeek-i));
+    weekDates.push(dateStr(d));
+  }
+  // Scores for the week
+  const scores=weekDates.map(d=>dailyScores[d]?.score).filter(s=>s!==undefined);
+  if(!scores.length)return null;
+  const avg=Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+  const best=Math.max(...scores);
+  const bestDay=weekDates[scores.indexOf(best)];
+  const bestDayName=new Date(bestDay+"T12:00:00").toLocaleDateString("en-US",{weekday:"long"});
+  // Weakest category this week
+  const catTotals={};
+  HAB_CATS.forEach(cat=>{
+    const vals=weekDates.map(d=>dailyScores[d]?.cats?.[cat]).filter(v=>v!==undefined);
+    catTotals[cat]=vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):0;
+  });
+  const weakCat=HAB_CATS.reduce((a,b)=>catTotals[a]<=catTotals[b]?a:b);
+  const weakPct=catTotals[weakCat];
+  // Tips per weak category
+  const tips={
+    Spiritual:"Schedule your prayer time like a non-negotiable appointment — same time every day.",
+    Trading:"Review your ICT bias every Sunday evening. Preparation is the edge.",
+    Longevity:"Stack your walk with another habit — shoes on right after your first meal.",
+    Sleep:"Set a hard 9:30pm phone alarm. One consistent bedtime changes everything.",
+  };
+  return{avg,best,bestDayName,weakCat,weakPct,tip:tips[weakCat]||"Stay consistent — small daily wins compound."};
+}
+
+// ── RENDER ──
+function render(){
+  const T=THEMES[themeIdx].T, A=THEMES[themeIdx].acc;
+  const {week,day}=getProgramWeekForDate(selectedDate);
+  const isSun=isSunday(selectedDate);
+  const isToday=selectedDate===todayStr();
+  const secs=getSections(selectedDate);
+  const dayH=getDayHabits(selectedDate);
+  const CHK="<span style='color:#fff;font-size:11px;font-weight:700'>&#10003;</span>";
+
+  // Checklist counts
+  let tot=0,dn=0;
+  secs.forEach(function(sec,si){sec.items.forEach(function(_,ii){tot++;if(checks[selectedDate+"-"+si+"-"+ii])dn++;});});
+  dayH.forEach(function(h){tot++;if(hChecks[h.id+"-"+selectedDate])dn++;});
+  const pct=tot?Math.round(dn/tot*100):0;
+  const catScores=computeCatScores(selectedDate);
+
+  // ── DAILY HTML ──
+  const sexDone=loggedSexOn(selectedDate);
+  const daysSince=daysSinceLastSex();
+  let dailyHTML="";
+
+  if(isSun){
+    dailyHTML+="<div style='padding:14px;border-radius:12px;background:linear-gradient(135deg,#FFD16618,#0D1117);border:1px solid #FFD16644;margin-bottom:16px;text-align:center'>";
+    dailyHTML+="<div style='font-size:20px'>&#x1F64F;</div>";
+    dailyHTML+="<div style='font-size:15px;font-weight:700;color:#FFD166;margin:4px 0'>Sunday - Rest &amp; Reset</div>";
+    dailyHTML+="<div style='font-size:12px;color:#8B949E'>Light exercise only. Reflect, recover, prepare for the new week.</div></div>";
+  }
+
+  // Intimacy tracking
+  dailyHTML+="<div style='margin-bottom:16px'><div class='sec-title' style='color:#A78BFA'>INTIMACY TRACKING</div>";
+  dailyHTML+="<div class='row sex-row"+(sexDone?" done":"")+"' style='cursor:pointer' onclick='toggleSexLog()'>";
+  dailyHTML+="<div class='box' style='"+(sexDone?"background:#A78BFA;border-color:#A78BFA":"")+"'>"+(sexDone?CHK:"")+"</div>";
+  dailyHTML+="<div style='flex:1'><div class='lbl'>Had sex today</div><div class='note'>Starts 3-day recovery routine</div></div></div></div>";
+
+  // Recovery card
+  if(sexLog.length>0&&daysSince!==null&&daysSince<=3){
+    var rDay=Math.min(2,daysSince);
+    var rTasks=RECOVERY_DAYS[rDay]||RECOVERY_DAYS[0];
+    var rPct=Math.min(100,Math.round(daysSince/3*100));
+    var rColor=rPct<50?"#E76F51":rPct<85?"#F4A261":"#52B788";
+    dailyHTML+="<div style='padding:14px;border-radius:12px;background:linear-gradient(135deg,#A78BFA18,#0D1117);border:1px solid #A78BFA44;margin-bottom:16px'>";
+    dailyHTML+="<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'>";
+    dailyHTML+="<div><div style='font-size:13px;font-weight:700;color:#A78BFA'>Recovery Day "+daysSince+" of 3</div>";
+    dailyHTML+="<div style='font-size:11px;color:#8B949E;margin-top:2px'>"+(rPct>=100?"Ready - optimal performance restored":"Target: 3 days. "+Math.max(0,3-daysSince)+" remaining")+"</div></div>";
+    dailyHTML+="<div style='font-size:26px;font-weight:800;color:"+rColor+"'>"+rPct+"%</div></div>";
+    dailyHTML+="<div style='background:#21262D;border-radius:4px;height:6px;margin-bottom:12px'>";
+    dailyHTML+="<div style='width:"+rPct+"%;height:6px;border-radius:4px;background:"+rColor+"'></div></div>";
+    dailyHTML+="<div style='font-size:11px;font-weight:700;color:#A78BFA;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px'>Day "+(rDay+1)+" priorities</div>";
+    rTasks.forEach(function(t){
+      dailyHTML+="<div style='padding:6px 0;border-bottom:1px solid #21262D22'>";
+      dailyHTML+="<div style='font-size:12px;color:#E6EDF3;font-weight:600'>&#8226; "+t.n+"</div>";
+      dailyHTML+="<div style='font-size:11px;color:#8B949E;margin-top:1px'>"+t.note+"</div></div>";
+    });
+    dailyHTML+="</div>";
+  }
+
+  // Daily sections
+  secs.forEach(function(sec,si){
+    var isExercise=sec.key==="exercise";
+    dailyHTML+="<div style='margin-bottom:16px'>";
+    dailyHTML+="<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'>";
+    dailyHTML+="<div class='sec-title' style='margin-bottom:0'>"+sec.title.toUpperCase()+"</div>";
+    var poolKey=isExercise?"exercise":sec.key;
+    dailyHTML+="<button onclick='openPoolModal(\""+poolKey+"\","+week+")' style='font-size:10px;color:"+T+";background:transparent;padding:3px 8px;border-radius:6px;border:1px solid "+T+"44'>Manage pool</button>";
+    dailyHTML+="</div>";
+    sec.items.forEach(function(item,ii){
+      var k=selectedDate+"-"+si+"-"+ii;
+      var isDone=!!checks[k];
+      dailyHTML+="<div class='row"+(isDone?" done":"")+"' style='cursor:pointer' onclick='toggleCheck(\""+k+"\")'>";
+      dailyHTML+="<div class='box'>"+(isDone?CHK:"")+"</div>";
+      dailyHTML+="<div style='flex:1'><div class='lbl'>"+item.n+"</div>"+(item.note?"<div class='note'>"+item.note+"</div>":"")+"</div></div>";
+    });
+    dailyHTML+="</div>";
+  });
+
+  // ── HABITS HTML ──
+  var todayHabits=getDayHabits(selectedDate);
+  var filtH=hFilter==="All"?todayHabits:habits[hFilter]||[];
+  var hcatBtns="";
+  HCATS.forEach(function(c){
+    hcatBtns+="<button class='hcat-btn"+(hFilter===c?" on":"")+"' style='"+(hFilter===c?"background:"+T+";color:#fff":"")+"' onclick='setHF(\""+c+"\")'>"+c+"</button>";
+  });
+  var hDone=todayHabits.filter(function(h){return hChecks[h.id+"-"+selectedDate];}).length;
+
+  var habitsHTML="<div class='card' style='background:color-mix(in srgb,"+T+" 9%,transparent);border-color:"+T+"66;margin-bottom:14px'>";
+  habitsHTML+="<div style='font-size:13px;font-weight:700;color:"+T+";margin-bottom:4px'>"+(isToday?"Today's":"This day's")+" Habits"+(isSun?" (Rest Day - Spiritual + Sleep only)":"")+"</div>";
+  habitsHTML+="<div style='font-size:12px;color:#C9D1D9;line-height:1.6'>1 habit per category rotates daily. Tap to expand for cue and 2-min rule.</div></div>";
+  habitsHTML+="<div style='margin-bottom:12px'>"+hcatBtns+"</div>";
+
+  if(filtH.length===0){
+    habitsHTML+="<div style='text-align:center;padding:24px;color:#8B949E;font-size:13px'>No habits for this day.</div>";
+  }else{
+    filtH.forEach(function(h){
+      var isDone=!!hChecks[h.id+"-"+selectedDate];
+      var s=streak(h.id);
+      var exp=expandedH===h.id;
+      var hc=HAB_COLORS[h.cat]||T;
+      var m=getStreakMilestone(s);
+      habitsHTML+="<div style='border-radius:10px;background:"+(isDone?"color-mix(in srgb,"+hc+" 13%,transparent)":"#161B22")+";border:1px solid "+(isDone?hc:"#21262D")+";margin-bottom:7px;overflow:hidden'>";
+      habitsHTML+="<div style='display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer' onclick='toggleExp(\""+h.id+"\")'>";
+      habitsHTML+="<div class='box' style='"+(isDone?"background:"+hc+";border-color:"+hc:"")+"' onclick='event.stopPropagation();toggleHabit(\""+h.id+"\",\""+selectedDate+"\")'>"+(isDone?CHK:"")+"</div>";
+      habitsHTML+="<div style='flex:1'><div style='font-size:13px;font-weight:600;color:"+(isDone?"#8B949E":"#E6EDF3")+";text-decoration:"+(isDone?"line-through":"none")+"'>"+h.name+"</div>";
+      habitsHTML+="<div style='font-size:10px;color:"+hc+";margin-top:1px'>"+h.cat+"</div></div>";
+      habitsHTML+="<div style='display:flex;flex-direction:column;align-items:flex-end;gap:2px'>";
+      if(s>0) habitsHTML+="<span class='streak'>Streak: "+s+"d</span>";
+      if(m) habitsHTML+="<span class='milestone-badge' style='background:"+m.color+"22;color:"+m.color+";border:1px solid "+m.color+"44'>"+m.icon+" "+m.label+"</span>";
+      habitsHTML+="<span style='font-size:11px;color:#8B949E'>"+(exp?"&#9650;":"&#9660;")+"</span></div></div>";
+      if(exp){
+        habitsHTML+="<div style='padding:0 13px 13px;border-top:1px solid #21262D'>";
+        if(h.cue) habitsHTML+="<div style='margin-top:8px'><span style='font-size:11px;color:"+hc+";font-weight:700'>CUE: </span><span style='font-size:12px;color:#C9D1D9'>"+h.cue+"</span></div>";
+        if(h.tip) habitsHTML+="<div style='margin-top:5px'><span style='font-size:11px;color:#F4A261;font-weight:700'>2-MIN: </span><span style='font-size:12px;color:#C9D1D9'>"+h.tip+"</span></div>";
+        habitsHTML+="<div style='display:flex;gap:8px;margin-top:10px'>";
+        habitsHTML+="<button onclick='openHModal(\""+h.id+"\")' style='padding:5px 10px;border-radius:6px;border:1px solid "+hc+";background:transparent;color:"+hc+";font-size:11px;font-weight:600'>Edit</button>";
+        habitsHTML+="<button onclick='removeHabit(\""+h.id+"\")' style='padding:5px 10px;border-radius:6px;border:1px solid #30363D;background:transparent;color:#8B949E;font-size:11px'>Remove</button></div></div>";
+      }
+      habitsHTML+="</div>";
+    });
+  }
+
+  // Manage all habits section
+  habitsHTML+="<div class='card' style='margin-top:16px'><div style='font-size:12px;font-weight:700;color:#8B949E;margin-bottom:10px'>Manage All Habits</div>";
+  HAB_CATS.forEach(function(cat){
+    var hc=HAB_COLORS[cat];
+    habitsHTML+="<div style='margin-bottom:14px'>";
+    habitsHTML+="<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px'>";
+    habitsHTML+="<div style='font-size:11px;font-weight:700;color:"+hc+";text-transform:uppercase;letter-spacing:1px'>"+cat+"</div>";
+    habitsHTML+="<button onclick='openHModal(\"new\",\""+cat+"\")' style='font-size:10px;color:"+hc+";background:transparent;padding:3px 8px;border-radius:6px;border:1px solid "+hc+"44'>+ Add</button></div>";
+    var catList=habits[cat]||[];
+    if(catList.length===0){
+      habitsHTML+="<div style='font-size:11px;color:#8B949E;padding:6px 0'>No habits yet. Add one above.</div>";
+    }else{
+      catList.forEach(function(h){
+        habitsHTML+="<div style='display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:#21262D;margin-bottom:4px'>";
+        habitsHTML+="<div style='flex:1;margin-right:8px'><div style='font-size:12px;color:#E6EDF3;font-weight:600'>"+h.name+"</div></div>";
+        habitsHTML+="<button onclick='openHModal(\""+h.id+"\")' style='padding:3px 8px;border-radius:5px;border:1px solid #30363D;background:transparent;color:#8B949E;font-size:10px;margin-right:4px'>Edit</button>";
+        habitsHTML+="<button onclick='removeHabit(\""+h.id+"\")' style='padding:3px 8px;border-radius:5px;border:1px solid #E76F5144;background:transparent;color:#E76F51;font-size:10px'>&#10005;</button></div>";
+      });
+    }
+    habitsHTML+="</div>";
+  });
+  habitsHTML+="</div>";
+
+  // ── STATS HTML ──
+  var sc=computeScore(selectedDate);
+  var scoreColor=sc<40?"#E76F51":sc<70?"#F4A261":"#52B788";
+  var scoreMsg=sc>=80?"Excellent!":sc>=60?"Good progress":sc>=40?"Building momentum":"Room to grow";
+  var scoreKeys=Object.keys(dailyScores).sort().slice(-14);
+  var daysSinceRecov=daysSinceLastSex();
+
+  // Weekly category averages
+  var weekStart=new Date(selectedDate.split("-")[0],parseInt(selectedDate.split("-")[1])-1,parseInt(selectedDate.split("-")[2]));
+  weekStart.setDate(weekStart.getDate()-weekStart.getDay()||7);
+  var weekDates=[];
+  for(var wi2=1;wi2<=7;wi2++){var wd=new Date(weekStart);wd.setDate(weekStart.getDate()+wi2);weekDates.push(dateStr(wd));}
+  var weekCatAvg={};
+  HAB_CATS.forEach(function(cat){
+    var vals=weekDates.map(function(d){var s=dailyScores[d];return s&&s.cats?s.cats[cat]:null;}).filter(function(v){return v!==null;});
+    weekCatAvg[cat]=vals.length?Math.round(vals.reduce(function(a,b){return a+b;},0)/vals.length):0;
+  });
+
+  // Weekly summary
+  var weeklySummary=getWeeklySummary();
+
+  var statsHTML="";
+
+  // Weekly summary card
+  if(weeklySummary){
+    var wsColor=weeklySummary.avg>=70?"#52B788":weeklySummary.avg>=40?"#F4A261":"#E76F51";
+    statsHTML+="<div class='card' style='background:linear-gradient(135deg,"+T+"18,#0D1117);border-color:"+T+"66'>";
+    statsHTML+="<div style='display:flex;align-items:center;gap:8px;margin-bottom:12px'>";
+    statsHTML+="<div style='font-size:22px'>"+(isSun?"&#x1F4CB;":"&#x1F4CA;")+"</div>";
+    statsHTML+="<div><div style='font-size:13px;font-weight:700;color:"+T+"'>"+(isSun?"Week in Review":"This Week So Far")+"</div>";
+    statsHTML+="<div style='font-size:11px;color:#8B949E'>Mon - "+(isSun?"Sun (complete)":"today")+"</div></div></div>";
+    statsHTML+="<div style='display:flex;gap:8px;margin-bottom:14px'>";
+    statsHTML+="<div style='flex:1;background:#21262D;border-radius:8px;padding:10px;text-align:center'>";
+    statsHTML+="<div style='font-size:22px;font-weight:800;color:"+wsColor+"'>"+weeklySummary.avg+"%</div>";
+    statsHTML+="<div style='font-size:10px;color:#8B949E;margin-top:2px'>Weekly avg</div></div>";
+    statsHTML+="<div style='flex:1;background:#21262D;border-radius:8px;padding:10px;text-align:center'>";
+    statsHTML+="<div style='font-size:22px;font-weight:800;color:#52B788'>"+weeklySummary.best+"%</div>";
+    statsHTML+="<div style='font-size:10px;color:#8B949E;margin-top:2px'>Best score</div></div>";
+    statsHTML+="<div style='flex:1;background:#21262D;border-radius:8px;padding:10px;text-align:center'>";
+    statsHTML+="<div style='font-size:13px;font-weight:700;color:#E6EDF3;margin-top:4px'>"+weeklySummary.bestDayName.slice(0,3)+"</div>";
+    statsHTML+="<div style='font-size:10px;color:#8B949E;margin-top:2px'>Best day</div></div></div>";
+    statsHTML+="<div style='padding:10px;background:#21262D;border-radius:8px;margin-bottom:10px'>";
+    statsHTML+="<div style='font-size:11px;color:"+(HAB_COLORS[weeklySummary.weakCat]||T)+";font-weight:700;margin-bottom:4px'>&#9888;&#65039; Needs work: "+weeklySummary.weakCat+" ("+weeklySummary.weakPct+"%)</div>";
+    statsHTML+="<div style='font-size:12px;color:#C9D1D9;line-height:1.5'>&#128161; "+weeklySummary.tip+"</div></div>";
+    if(isSun) statsHTML+="<div style='font-size:11px;color:#8B949E;text-align:center'>Tomorrow starts a new week. Reset and go again. &#x1F64F;</div>";
+    statsHTML+="</div>";
+  }
+
+  // Today score ring
+  statsHTML+="<div class='card'>";
+  statsHTML+="<div style='font-size:11px;font-weight:700;color:#8B949E;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px'>"+(selectedDate===todayStr()?"Today's":"Selected Day")+" Score</div>";
+  statsHTML+="<div style='display:flex;align-items:center;gap:16px;margin-bottom:12px'>";
+  statsHTML+="<div style='position:relative;width:80px;height:80px;flex-shrink:0'>";
+  var circ=2*3.14159*34;
+  statsHTML+="<svg width='80' height='80' viewBox='0 0 80 80'>";
+  statsHTML+="<circle cx='40' cy='40' r='34' fill='none' stroke='#21262D' stroke-width='8'/>";
+  statsHTML+="<circle cx='40' cy='40' r='34' fill='none' stroke='"+scoreColor+"' stroke-width='8'";
+  statsHTML+=" stroke-dasharray='"+Math.round(circ*sc/100)+" "+Math.round(circ*(100-sc)/100)+"'";
+  statsHTML+=" stroke-dashoffset='"+Math.round(circ*0.25)+"' stroke-linecap='round'/></svg>";
+  statsHTML+="<div style='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:"+scoreColor+"'>"+sc+"%</div></div>";
+  statsHTML+="<div style='flex:1'><div style='font-size:15px;font-weight:700;color:"+scoreColor+";margin-bottom:4px'>"+scoreMsg+"</div>";
+  statsHTML+="<div style='font-size:12px;color:#8B949E'>Exercise + vitamins + foods + habits</div></div></div></div>";
+
+  // Category bars
+  statsHTML+="<div class='card'><div style='font-size:11px;font-weight:700;color:#8B949E;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px'>This Week by Category</div>";
+  HAB_CATS.forEach(function(cat){
+    var p=weekCatAvg[cat]||0; var c=HAB_COLORS[cat];
+    statsHTML+="<div style='margin-bottom:10px'><div style='display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px'>";
+    statsHTML+="<span style='color:"+c+";font-weight:600'>"+cat+"</span><span style='color:"+c+";font-weight:700'>"+p+"%</span></div>";
+    statsHTML+="<div class='stat-cat-bar'><div class='stat-cat-fill' style='width:"+p+"%;background:"+c+"'></div></div></div>";
+  });
+  statsHTML+="</div>";
+
+  // Recovery status
+  if(sexLog.length>0){
+    var dsr=daysSinceRecov||0;
+    var rPct2=Math.min(100,Math.round(dsr/3*100));
+    var rCol=dsr>=3?"#52B788":dsr>=1?"#F4A261":"#E76F51";
+    statsHTML+="<div class='card' style='border-color:#A78BFA44'>";
+    statsHTML+="<div style='font-size:11px;font-weight:700;color:#A78BFA;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px'>Recovery Status</div>";
+    statsHTML+="<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'>";
+    statsHTML+="<div style='font-size:13px;color:#C9D1D9'>Days since last intimacy</div>";
+    statsHTML+="<div style='font-size:20px;font-weight:800;color:"+rCol+"'>"+(dsr===0?"Today":dsr+"d")+"</div></div>";
+    statsHTML+="<div style='background:#21262D;border-radius:4px;height:8px;margin-bottom:6px'>";
+    statsHTML+="<div style='width:"+rPct2+"%;height:8px;border-radius:4px;background:"+rCol+"'></div></div>";
+    statsHTML+="<div style='font-size:12px;color:#8B949E'>"+(dsr>=3?"Fully recovered!":"3-day target. "+Math.max(0,3-dsr)+" day(s) remaining.")+"</div>";
+    statsHTML+="<div style='margin-top:8px;font-size:11px;color:#8B949E'>Recent intimacy dates:</div><div style='margin-top:4px'>";
+    [...sexLog].sort().reverse().slice(0,5).forEach(function(d){
+      statsHTML+="<span style='font-size:11px;color:#A78BFA;background:#A78BFA18;border-radius:4px;padding:2px 6px;margin-right:4px;display:inline-block;margin-top:4px'>"+d+"</span>";
+    });
+    statsHTML+="</div></div>";
+  }
+
+  // 14-day chart
+  if(scoreKeys.length>1){
+    statsHTML+="<div class='card'><div style='font-size:11px;font-weight:700;color:#8B949E;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px'>14-Day Progress</div>";
+    statsHTML+="<div style='display:flex;gap:3px;align-items:flex-end;overflow-x:auto;padding-bottom:4px'>";
+    scoreKeys.forEach(function(d){
+      var entry=dailyScores[d]; var s=entry?entry.score||0:0;
+      var h=Math.max(4,Math.round(s/100*60));
+      var isSex=sexLog.includes(d);
+      var bc=s>=70?A:s>=40?"#F4A261":"#E76F51";
+      statsHTML+="<div style='display:flex;flex-direction:column;align-items:center;flex:1;min-width:22px'>";
+      statsHTML+=(isSex?"<div style='font-size:9px;margin-bottom:1px'>&#x1F49C;</div>":"<div style='font-size:8px;color:#8B949E;margin-bottom:1px'>"+s+"%</div>");
+      statsHTML+="<div style='width:100%;height:"+h+"px;background:"+bc+";border-radius:3px 3px 0 0;opacity:.9'></div>";
+      statsHTML+="<div style='font-size:7px;color:#8B949E;margin-top:2px;text-align:center'>"+d.slice(5)+"</div></div>";
+    });
+    statsHTML+="</div>";
+    statsHTML+="<div style='display:flex;gap:10px;margin-top:8px;flex-wrap:wrap'>";
+    statsHTML+="<div style='display:flex;align-items:center;gap:4px'><div style='width:10px;height:10px;border-radius:2px;background:"+A+"'></div><span style='font-size:10px;color:#8B949E'>70%+</span></div>";
+    statsHTML+="<div style='display:flex;align-items:center;gap:4px'><div style='width:10px;height:10px;border-radius:2px;background:#F4A261'></div><span style='font-size:10px;color:#8B949E'>40-69%</span></div>";
+    statsHTML+="<div style='display:flex;align-items:center;gap:4px'><span>&#x1F49C;</span><span style='font-size:10px;color:#8B949E'>Intimacy</span></div></div></div>";
+  }else{
+    statsHTML+="<div style='text-align:center;padding:24px;color:#8B949E;font-size:12px'>Complete daily items to build your chart. Shows after 2 days.</div>";
+  }
+
+  // Program info
+  statsHTML+="<div class='card'><div style='font-size:11px;font-weight:700;color:#8B949E;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px'>Program</div>";
+  statsHTML+="<div style='font-size:12px;color:#C9D1D9;margin-bottom:4px'>Current: <b style='color:"+T+"'>"+WEEK_LABELS[week]+"</b></div>";
+  statsHTML+="<div style='font-size:12px;color:#8B949E;margin-bottom:12px'>Rolls over every 4 weeks automatically. All history is kept.</div>";
+  statsHTML+="<button onclick='if(confirm(\"Reset cycle to start from this Monday?\"))resetAndRender()' style='width:100%;padding:10px;border-radius:8px;background:#21262D;color:#8B949E;font-size:12px'>Reset Cycle to This Monday</button></div>";
+
+  // Theme picker
+  statsHTML+="<div class='card'><div style='font-size:11px;font-weight:700;color:#8B949E;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px'>Theme</div><div style='display:flex;gap:10px;flex-wrap:wrap'>";
+  THEMES.forEach(function(th,i){
+    statsHTML+="<div style='display:flex;flex-direction:column;align-items:center;gap:4px'>";
+    statsHTML+="<div class='theme-dot"+(i===themeIdx?" active":"")+"' style='background:"+th.acc+"' onclick='setTheme("+i+")'></div>";
+    statsHTML+="<div style='font-size:9px;color:#8B949E'>"+th.name+"</div></div>";
+  });
+  statsHTML+="</div></div>";
+
+  // Progress bar values
+  var totalDn=dn; var totalTot=tot;
+  var bPct=totalTot?Math.round(totalDn/totalTot*100):0;
+  var selDateObj=new Date(selectedDate.split("-")[0],parseInt(selectedDate.split("-")[1])-1,parseInt(selectedDate.split("-")[2]));
+  var dateDisplay=selDateObj.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+  var isViewingToday=selectedDate===todayStr();
+
+  // Week/day nav
+  var wbtns="";
+  WEEKS.forEach(function(w,i){
+    wbtns+="<button class='wbtn"+(i===week?" on":"")+"' style='background:"+(i===week?T:"#21262D")+"' onclick='setW("+i+")'>W"+(i+1)+"</button>";
+  });
+  var dbtns="";
+  WEEKS[week].days.forEach(function(d,i){
+    dbtns+="<button class='dbtn"+(i===day?" on":"")+"' style='background:"+(i===day?T+"55":"#161B22")+";"+(i===day?"border-color:"+T:"")+"' onclick='setD("+i+")'>"+d.day+"</button>";
+  });
+
+  var appHTML="<div class='hdr' style='background:linear-gradient(135deg,"+T+"33,#0D1117)'>";
+  appHTML+="<div style='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px'>";
+  appHTML+="<div><div class='greeting'>"+greeting()+", <span>Alex</span></div>";
+  appHTML+="<div style='font-size:12px;color:#8B949E;margin-top:2px'>"+WEEK_LABELS[week]+" &#8226; "+(isSun?"Sunday Rest":"Day "+(day+1))+"</div></div>";
+  appHTML+="<div style='display:flex;flex-direction:column;align-items:flex-end;gap:5px'>";
+  appHTML+="<div id='badge' class='badge'>Loading...</div>";
+  appHTML+="<div style='font-size:10px;color:#8B949E;cursor:pointer;text-decoration:underline' onclick='startChangePin()'>Change PIN</div></div></div>";
+  appHTML+="<div style='display:flex;align-items:center;gap:8px;margin-bottom:8px'>";
+  appHTML+="<button onclick='changeDate(-1)' style='padding:4px 10px;border-radius:6px;background:#21262D;color:#8B949E;font-size:14px'>&#8249;</button>";
+  appHTML+="<div style='flex:1;text-align:center'><div style='font-size:13px;font-weight:700;color:"+(isViewingToday?T:"#E6EDF3")+"'>"+(isViewingToday?"Today - "+dateDisplay:dateDisplay)+"</div></div>";
+  appHTML+="<button onclick='changeDate(1)' style='padding:4px 10px;border-radius:6px;background:#21262D;color:#8B949E;font-size:14px'>&#8250;</button>";
+  if(!isViewingToday) appHTML+="<button onclick='selectedDate=todayStr();render()' style='padding:4px 8px;border-radius:6px;background:"+T+";color:#fff;font-size:10px;font-weight:600'>Today</button>";
+  appHTML+="</div>";
+  appHTML+="<div style='display:flex;justify-content:space-between;font-size:11px;color:#8B949E;margin-bottom:4px'><span>Progress "+totalDn+"/"+totalTot+"</span><span style='color:"+T+";font-weight:700'>"+bPct+"%</span></div>";
+  appHTML+="<div class='prog-bar'><div class='prog-fill' style='width:"+bPct+"%'></div></div>";
+  appHTML+="<div class='week-btns'>"+wbtns+"</div>";
+  appHTML+="<div class='day-btns'>"+dbtns+"</div></div>";
+  appHTML+="<div class='tabs'>";
+  appHTML+="<button class='tab"+(view==="daily"?" on":"")+"' onclick='setView(\"daily\")'>Daily</button>";
+  appHTML+="<button class='tab"+(view==="habits"?" on":"")+"' onclick='setView(\"habits\")'>Habits</button>";
+  appHTML+="<button class='tab"+(view==="stats"?" on":"")+"' onclick='setView(\"stats\")'>Stats</button></div>";
+  appHTML+="<div class='pane"+(view==="daily"?" on":"")+"'>"+dailyHTML+"</div>";
+  appHTML+="<div class='pane"+(view==="habits"?" on":"")+"'>"+habitsHTML+"</div>";
+  appHTML+="<div class='pane"+(view==="stats"?" on":"")+"'>"+statsHTML+"</div>";
+
+  document.getElementById("app").innerHTML=appHTML;
+}
+
+
+// ── ACTIONS ──
+function setView(v){view=v;if(v==="stats"){saveScore();}render();}
+function toggleCheck(k){checks[k]=!checks[k];persist("checks",checks);saveScore();render();}
+function toggleHabit(id,ds){const k=id+"-"+ds;hChecks[k]=!hChecks[k];persist("hChecks",hChecks);saveScore();render();}
+function toggleExp(id){expandedH=expandedH===id?null:id;render();}
+function resetAndRender(){resetCycle();render();}
+
+// ── BOOT ──
+initPools();
+initHabits();
+loadState();
+</script>
+</body>
+</html>
